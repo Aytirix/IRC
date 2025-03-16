@@ -1,53 +1,46 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net">
-  <diagram name="IRC_Project">
-    <mxGraphModel dx="1288" dy="1413" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36" version="26.1.1">
+  <diagram name="IRC_Project" id="0">
+    <mxGraphModel dx="1393" dy="705" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <!-- Server Class -->
-        <mxCell id="2" value="Server" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="1">
-          <mxGeometry x="180" y="90" width="200" height="180" as="geometry" />
+        <mxCell id="2" value="Server" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="80" y="160" width="200" height="200" as="geometry" />
         </mxCell>
-        <mxCell id="3" value="- socket: int&#10;- clients: list&lt;Client&gt;&#10;- port: int&#10;+ start(): void&#10;+ acceptClient(): void&#10;+ removeClient(): void&#10;+ handleConnections(): void" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="2">
-          <mxGeometry width="200" height="160" as="geometry" />
+        <mxCell id="3" value="- socket: int&lt;br&gt;- clients: list&lt;br&gt;- port: int&lt;div&gt;&lt;hr&gt;+ start(): void&lt;br&gt;+ acceptClient(): void&lt;br&gt;+ removeClient(): void&lt;br&gt;+ handleConnections(): void&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" parent="2" vertex="1" connectable="0">
+          <mxGeometry y="20" width="200" height="180" as="geometry" />
         </mxCell>
-        <!-- Client Class -->
-        <mxCell id="4" value="Client" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="1">
-          <mxGeometry x="400" y="90" width="200" height="200" as="geometry" />
+        <mxCell id="4" value="Client" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="360" y="160" width="200" height="200" as="geometry" />
         </mxCell>
-        <mxCell id="5" value="- socket_fd: int&#10;- nickname: string&#10;- username: string&#10;- channel: Channel&#10;+ joinChannel(channel: Channel)&#10;+ leaveChannel(channel: Channel)&#10;+ sendMessage(msg: string)" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="4">
-          <mxGeometry width="200" height="180" as="geometry" />
+        <mxCell id="5" value="- socket_fd: int&lt;br&gt;- nickname: string&lt;br&gt;- username: string&lt;br&gt;- channel: Channel&lt;div&gt;&lt;hr&gt;+ joinChannel(channel: Channel)&lt;br&gt;+ leaveChannel(channel: Channel)&lt;br&gt;+ sendMessage(msg: string)&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" parent="4" vertex="1" connectable="0">
+          <mxGeometry y="20" width="200" height="180" as="geometry" />
         </mxCell>
-        <!-- Channel Class -->
-        <mxCell id="6" value="Channel" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="1">
-          <mxGeometry x="620" y="90" width="200" height="200" as="geometry" />
+        <mxCell id="6" value="Channel" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="640" y="160" width="200" height="200" as="geometry" />
         </mxCell>
-        <mxCell id="7" value="- name: string&#10;- users: list&lt;Client&gt;&#10;- topic: string&#10;- modes: string&#10;+ addUser(user: Client)&#10;+ removeUser(user: Client)&#10;+ broadcastMessage(msg: string)" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="6">
-          <mxGeometry width="200" height="180" as="geometry" />
+        <mxCell id="7" value="- name: string&lt;br&gt;- users: list&lt;br&gt;- topic: string&lt;br&gt;- modes: string&lt;div&gt;&lt;hr&gt;+ addUser(user: Client)&lt;br&gt;+ removeUser(user: Client)&lt;br&gt;+ broadcastMessage(msg: string)&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" parent="6" vertex="1" connectable="0">
+          <mxGeometry y="20" width="200" height="180" as="geometry" />
         </mxCell>
-        <!-- CommandHandler Class -->
-        <mxCell id="8" value="CommandHandler" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="1">
-          <mxGeometry x="840" y="90" width="200" height="140" as="geometry" />
+        <mxCell id="8" value="CommandHandler" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="840" y="400" width="200" height="160" as="geometry" />
         </mxCell>
-        <mxCell id="9" value="- commands: map&#10;+ executeCommand(command: string)" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="8">
-          <mxGeometry width="200" height="120" as="geometry" />
+        <mxCell id="9" value="- commands: map&lt;div&gt;&lt;hr&gt;+ executeCommand(command: string)&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" parent="8" vertex="1" connectable="0">
+          <mxGeometry y="20" width="200" height="140" as="geometry" />
         </mxCell>
-        <!-- MessageParser Class -->
-        <mxCell id="10" value="MessageParser" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="1">
-          <mxGeometry x="1040" y="90" width="200" height="140" as="geometry" />
+        <mxCell id="10" value="MessageParser" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="1120" y="400" width="200" height="160" as="geometry" />
         </mxCell>
-        <mxCell id="11" value="+ parseMessage(msg: string)" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="10">
-          <mxGeometry width="200" height="60" as="geometry" />
+        <mxCell id="11" value="+ parseMessage(msg: string)" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" parent="10" vertex="1" connectable="0">
+          <mxGeometry y="20" width="200" height="140" as="geometry" />
         </mxCell>
-        <!-- Relationships -->
-        <mxCell id="12" edge="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" source="2" target="4" parent="1">
+        <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="2" target="4" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="13" edge="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" source="4" target="6" parent="1">
+        <mxCell id="13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="4" target="6" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="14" edge="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" source="8" target="10" parent="1">
+        <mxCell id="14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="8" target="10" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
