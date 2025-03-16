@@ -13,7 +13,7 @@
         <mxCell id="4" value="Client" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" parent="1" vertex="1" connectable="0">
           <mxGeometry x="360" y="160" width="200" height="200" as="geometry" />
         </mxCell>
-        <mxCell id="5" value="- socket_fd: int&lt;br&gt;- nickname: string&lt;br&gt;- username: string&lt;br&gt;- channel: Channel&lt;div&gt;&lt;hr&gt;+ joinChannel(channel: Channel)&lt;br&gt;+ leaveChannel(channel: Channel)&lt;br&gt;+ sendMessage(msg: string)&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" parent="4" vertex="1" connectable="0">
+        <mxCell id="5" value="- socket_fd: int&lt;br&gt;- username: string&lt;br&gt;- channel: Channel&lt;div&gt;&lt;hr&gt;+ joinChannel(channel: Channel)&lt;br&gt;+ leaveChannel(channel: Channel)&lt;br&gt;+ sendMessage(msg: string)&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffffff;align=center;verticalAlign=middle;" parent="4" vertex="1" connectable="0">
           <mxGeometry y="20" width="200" height="180" as="geometry" />
         </mxCell>
         <mxCell id="6" value="Channel" style="swimlane;html=1;whiteSpace=wrap;rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;" parent="1" vertex="1" connectable="0">
