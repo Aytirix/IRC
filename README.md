@@ -12,7 +12,7 @@ Vous pouvez consulter le diagramme du projet en suivant [ce lien](https://app.di
 
 1. **Exécuter le serveur**
 
-	Lancez le serveur en utilisant la commande suivante, en remplaçant `<port>` par le port d'écoute (par exemple 6667) et `<password>` par le mot de passe que vous souhaitez utiliser :
+	Lancez le serveur en utilisant la commande suivante :
 
 	```bash
 	./ircserv <port> <password>
@@ -22,7 +22,8 @@ Vous pouvez consulter le diagramme du projet en suivant [ce lien](https://app.di
 
 1. **Lancer IRSSI** avec la commande suivante :
 
-Cette commande se connecte à votre serveur IRC local (**localhost**), sur le port spécifié, avec le pseudo et le mot de passe spécifiés.
+	Cette commande se connecte à votre serveur IRC local 
+
 	```bash
 	irssi -c localhost -p <port> -n <pseudo> -w <password>
 	```
