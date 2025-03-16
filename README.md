@@ -22,7 +22,7 @@ Vous pouvez consulter le diagramme du projet en suivant [ce lien](https://app.di
 
 1. **Lancer IRSSI** avec la commande suivante :
 
-	Cette commande se connecte à votre serveur IRC local 
+	Cette commande se connecte à votre serveur IRC local :
 
 	```bash
 	irssi -c localhost -p <port> -n <pseudo> -w <password>
