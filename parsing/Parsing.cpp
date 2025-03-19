@@ -8,8 +8,8 @@ Parsing::~Parsing() {}
 void Parsing::init_parsing(Client client, std::string buffer)
 {
 	(void)buffer;
-	// TYPE DE FORMAT :
-	// Serveur démarré sur le port 6666
+	// TYPE DE FORMAT QUAND ON UTILISE SE CONNECTE
+	// Chaque ligne cmd est un nouvelle appelle a parsing
 	// Nouvelle connexion : fd 4
 	// cmd : fd client 4 : 'CAP LS'
 	// cmd : fd client 4 : 'PASS test'
