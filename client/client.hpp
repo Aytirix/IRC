@@ -1,28 +1,30 @@
-
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
+#include <poll.h>
 #include <list>
 #include <string>
+#include <map>
+#include <unistd.h>
 
 class Client
 {
 private:
-	int socket_fd;
-	std::string username;
-
+    pollfd pfd;
+    std::string username;
+	std::string buffer;
 public:
-	Client(int socket_fd, const std::string &username);
+    Client(pollfd socket_fd);
+    ~Client();
 
-	~Client();
+    // Getters
+    pollfd getSocketPfd() const { return this->pfd; }
+    int getSocketFd() const { return this->pfd.fd; }
+    std::string getUsername() const { return this->username; }
+	std::string &getBuffer() { return this->buffer; }
 
-	// Getters
-	int getSocketFd() const { return this->socket_fd; }
-	std::string getUsername() const { return this->username; }
-
-	// Setters
-	void setUsername(const std::string &username);
-	void setSocketFd(int socket_fd);
+    // Setters
+    void setUsername(const std::string &username);
 };
 
 #endif

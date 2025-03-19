@@ -5,7 +5,8 @@ CFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 -fsanitize=address
 
 SRCS = main.cpp \
 		server/server.cpp \
-		client/client.cpp
+		client/client.cpp \
+		parsing/Parsing.cpp
 
 OBJ_DIR = obj
 OBJS = $(addprefix $(OBJ_DIR)/,$(SRCS:.cpp=.o))

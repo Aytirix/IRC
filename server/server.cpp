@@ -1,120 +1,181 @@
 #include "server.hpp"
+#include "../parsing/Parsing.hpp"
 #include "../client/client.hpp"
-#include <iostream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <cstring>
 
 Server::Server(int port, const std::string &password)
+	: listen_fd_(-1), port_(port), password_(password)
 {
-	this->port = port;
-	this->password = password;
-	this->socket_fd = -1;
 }
 
 Server::~Server()
 {
-	for (std::map<int, Client *>::iterator it = this->clients.begin(); it != this->clients.end(); ++it)
-	{
-		delete it->second;
-	}
-	close(this->socket_fd);
+	for (std::map<int, Client>::iterator it = clients_.begin(); it != clients_.end(); ++it)
+		close(it->first);
 }
 
-void Server::start()
+bool Server::setNonBlocking(int fd)
 {
-	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->socket_fd == -1)
-	{
-		std::cerr << "Error creating socket." << std::endl;
-		return;
-	}
-
-	sockaddr_in server_addr;
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = INADDR_ANY;
-	server_addr.sin_port = htons(this->port);
-
-	if (bind(this->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
-	{
-		std::cerr << "Error binding socket." << std::endl;
-		return;
-	}
-
-	if (listen(this->socket_fd, 10) == -1)
-	{
-		std::cerr << "Error listening on socket." << std::endl;
-		return;
-	}
-
-	std::cout << "Server started on port " << this->port << std::endl;
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		return false;
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		return false;
+	return true;
 }
 
-void Server::loop()
+bool Server::init()
 {
-	while (this->socket_fd != -1)
+	// Création du socket d'écoute
+	listen_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+	if (listen_fd_ < 0)
 	{
-		this->acceptClient();
-		this->handleConnections();
+		perror("socket");
+		return false;
 	}
+	// Mettre le socket en mode non bloquant
+	if (!setNonBlocking(listen_fd_))
+	{
+		perror("setNonBlocking");
+		close(listen_fd_);
+		return false;
+	}
+	// Configuration de l'adresse du serveur
+	sockaddr_in serv_addr;
+	std::memset(&serv_addr, 0, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(port_);
+
+	int opt = 1;
+	if (setsockopt(listen_fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	{
+		perror("setsockopt");
+		close(listen_fd_);
+		return false;
+	}
+
+	if (bind(listen_fd_, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	{
+		perror("bind");
+		close(listen_fd_);
+		return false;
+	}
+
+	if (listen(listen_fd_, 10) < 0)
+	{
+		perror("listen");
+		close(listen_fd_);
+		return false;
+	}
+
+	// Ajout du socket d'écoute dans la map
+	pollfd listen_pfd;
+	listen_pfd.fd = listen_fd_;
+	listen_pfd.events = POLLIN;
+	Client listenClient(listen_pfd);
+	clients_.insert(std::make_pair(listen_fd_, listenClient));
+
+	std::cout << "Serveur démarré sur le port " << port_ << std::endl;
+	return true;
 }
 
-void Server::acceptClient()
+void Server::handleNewConnection()
 {
 	sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
-
-	int client_socket = accept(this->socket_fd, (struct sockaddr *)&client_addr, &client_len);
-	if (client_socket == -1)
+	int client_fd = accept(listen_fd_, (sockaddr *)&client_addr, &client_len);
+	if (client_fd < 0)
 	{
-		std::cerr << "Error accepting client." << std::endl;
+		if (errno != EWOULDBLOCK)
+			perror("accept");
 		return;
 	}
-
-	Client *client = new Client(client_socket, "");
-	this->clients[client_socket] = client;
-	std::cout << "Client connected." << std::endl;
-}
-
-void Server::removeClient(Client *client)
-{
-	this->clients.erase(client->getSocketFd());
-	close(client->getSocketFd());
-	std::cout << "Client removed." << std::endl;
-}
-
-void Server::handleConnections()
-{
-	for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it)
+	// Configuration du socket client en mode non bloquant
+	if (!setNonBlocking(client_fd))
 	{
-		int client_fd = it->first;
-		char buffer[1024];
-		int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
-		std::cout << "Bytes received: " << bytes_received << std::endl;
-		if (bytes_received > 0)
-		{
-			buffer[bytes_received] = '\0';
-			std::cout << "Received message from client: " << buffer << std::endl;
+		perror("setNonBlocking client");
+		close(client_fd);
+		return;
+	}
+	pollfd client_pfd;
+	client_pfd.fd = client_fd;
+	client_pfd.events = POLLIN;
+	Client client(client_pfd);
+	clients_.insert(std::make_pair(client_fd, client));
+	std::cout << "Nouvelle connexion : fd " << client_fd << std::endl;
+}
 
-			std::string message = "Message received: --->" + std::string(buffer);
-			send(client_fd, message.c_str(), message.length(), 0);
-		}
-		else if (bytes_received == 0)
-		{
-			std::cout << "Client disconnected." << std::endl;
-			removeClient(it->second);
-		}
+void Server::handleClientData(int client_fd)
+{
+	char tempBuffer[2048];
+	int n = read(client_fd, tempBuffer, sizeof(tempBuffer) - 1);
+	if (n <= 0)
+	{
+		if (n == 0)
+			std::cout << "Client déconnecté : fd " << client_fd << std::endl;
 		else
+			perror("read");
+		close(client_fd);
+		clients_.erase(client_fd);
+		return;
+	}
+	tempBuffer[n] = '\0';
+
+	std::map<int, Client>::iterator it = clients_.find(client_fd);
+	if (it == clients_.end())
+	{
+		std::cerr << "Erreur : client introuvable pour fd " << client_fd << std::endl;
+		return;
+	}
+	Client &client = it->second;
+	std::string &buffer = client.getBuffer();
+	
+	buffer.append(tempBuffer);
+
+	// Tant qu'une commande complète (délimitée par '\n') est présente, on la traite
+	std::string::size_type pos;
+	while ((pos = buffer.find('\n')) != std::string::npos)
+	{
+		// Extraction de la commande (on peut également gérer '\r' si nécessaire)
+		std::string command = buffer.substr(0, pos);
+		// Supprimer la commande traitée du buffer
+		buffer.erase(0, pos + 1);
+
+		std::cout << "Commande complète reçue du fd " << client_fd << " : '"
+				  << command << "'" << std::endl;
+
+		Parsing parsing;
+		std::map<std::string, std::string> result = parsing.init_parsing(command);
+	}
+}
+
+void Server::run()
+{
+	while (true)
+	{
+		// Reconstruire le tableau de pollfd à partir de la map
+		std::vector<pollfd> pollfds;
+		for (std::map<int, Client>::iterator it = clients_.begin(); it != clients_.end(); ++it)
 		{
-			std::cerr << "Error receiving data from client." << std::endl;
-			removeClient(it->second);
+			pollfds.push_back(it->second.getSocketPfd());
+		}
+		int ret = poll(&pollfds[0], pollfds.size(), -1);
+		if (ret < 0)
+		{
+			perror("poll");
+			break;
+		}
+		// Parcourir les descripteurs ayant généré un événement
+		for (size_t i = 0; i < pollfds.size(); ++i)
+		{
+			if (pollfds[i].revents & POLLIN)
+			{
+				int fd = pollfds[i].fd;
+				if (fd == listen_fd_)
+					handleNewConnection();
+				else
+					handleClientData(fd);
+			}
 		}
 	}
-	std::cout << "Handling connections." << std::endl;
-}
-
-bool Server::verifyPassword(const std::string &password)
-{
-	return (this->password == password);
 }

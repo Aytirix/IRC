@@ -1,23 +1,13 @@
 #include "client.hpp"
-#include <unistd.h>
 
-Client::Client(int socket_fd, const std::string& username)
+Client::Client(pollfd pfd)
 {
-	this->socket_fd = socket_fd;
-	this->username = username;
+	this->pfd = pfd;
 }
 
-Client::~Client()
-{
-	close(this->socket_fd);
-}
+Client::~Client() {}
 
-void Client::setUsername(const std::string& username)
+void Client::setUsername(const std::string &username)
 {
 	this->username = username;
-}
-
-void Client::setSocketFd(int socket_fd)
-{
-	this->socket_fd = socket_fd;
 }
