@@ -31,4 +31,8 @@ Vous pouvez consulter le Figma du projet en suivant [ce lien](https://www.figma.
 	irssi -c localhost -p <port> -n <pseudo> -w <password>
 	```
 
+ 	```bash
+	nc localhost <port>
+	```
+
 ---
