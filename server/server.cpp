@@ -107,7 +107,7 @@ void Server::handleNewConnection()
 
 void Server::handleClientData(int client_fd)
 {
-	char tempBuffer[2048];
+	char tempBuffer[1024];
 	int n = read(client_fd, tempBuffer, sizeof(tempBuffer) - 1);
 	if (n <= 0)
 	{
@@ -129,24 +129,34 @@ void Server::handleClientData(int client_fd)
 	}
 	Client &client = it->second;
 	std::string &buffer = client.getBuffer();
-	
+
 	buffer.append(tempBuffer);
 
 	// Tant qu'une commande complète (délimitée par '\n') est présente, on la traite
 	std::string::size_type pos;
-	while ((pos = buffer.find('\n')) != std::string::npos)
+	while ((pos = buffer.find("\n")) != std::string::npos)
 	{
 		// Extraction de la commande (on peut également gérer '\r' si nécessaire)
-		std::string command = buffer.substr(0, pos);
+		std::string command = buffer.substr(0, pos - 1);
 		// Supprimer la commande traitée du buffer
 		buffer.erase(0, pos + 1);
 
-		std::cout << "Commande complète reçue du fd " << client_fd << " : '"
-				  << command << "'" << std::endl;
+		std::cout << "cmd : " << client_fd << " : '" << command << "'" << std::endl;
 
 		Parsing parsing;
-		std::map<std::string, std::string> result = parsing.init_parsing(command);
+		parsing.init_parsing(client, command);
 	}
+}
+
+void Server::send_data(int client_fd, std::string data)
+{
+	if (data.size() == 0 || data[data.size() - 1] != '\n')
+		data += '\n';
+	ssize_t bytes = write(client_fd, data.c_str(), data.size());
+	if (bytes < 0)
+		perror("write");
+	else if (bytes < (ssize_t)data.size())
+		std::cerr << "Erreur : données partiellement envoyées" << std::endl;
 }
 
 void Server::run()

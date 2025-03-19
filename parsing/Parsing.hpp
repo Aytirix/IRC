@@ -14,7 +14,7 @@ public:
 
 	~Parsing();
 
-	std::map<std::string, std::string> init_parsing(std::string buffer);
+	void init_parsing(Client client, std::string buffer);
 };
 
 #endif

@@ -18,22 +18,24 @@
 
 class Server
 {
-public:
-	Server(int port, const std::string &password);
-	~Server();
+	public:
+		Server(int port, const std::string &password);
+		~Server();
 
-	bool init();
-	void run();
+		bool init();
+		void run();
 
-private:
-	int listen_fd_;
-	int port_;
-	std::string password_;
-	std::map<int, Client> clients_;
+		void Server::send_data(int client_fd, std::string data);
 
-	bool setNonBlocking(int fd);
-	void handleNewConnection();
-	void handleClientData(int client_fd);
+	private:
+		int listen_fd_;
+		int port_;
+		std::string password_;
+		std::map<int, Client> clients_;
+
+		bool setNonBlocking(int fd);
+		void handleNewConnection();
+		void handleClientData(int client_fd);
 };
 
 #endif

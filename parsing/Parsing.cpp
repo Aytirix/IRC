@@ -5,9 +5,15 @@ Parsing::Parsing() {}
 
 Parsing::~Parsing() {}
 
-std::map<std::string, std::string> Parsing::init_parsing(std::string buffer)
+void Parsing::init_parsing(Client client, std::string buffer)
 {
 	(void)buffer;
-	std::map<std::string, std::string> result;
-	return result;
+	// TYPE DE FORMAT :
+	// Serveur démarré sur le port 6666
+	// Nouvelle connexion : fd 4
+	// cmd : fd client 4 : 'CAP LS'
+	// cmd : fd client 4 : 'PASS test'
+	// cmd : fd client 4 : 'NICK test2'
+	// cmd : fd client 4 : 'USER thmouty thmouty localhost :Theo Mouty'
+
 }
