@@ -21,7 +21,7 @@ public:
     // Getters
     pollfd getSocketPfd() const { return this->pfd; }
     int getSocketFd() const { return this->pfd.fd; }
-    std::string getUsername() const { return this->username; }
+    std::string getNickname() const { return this->username; }
 	std::string &getBuffer() { return this->buffer; }
 
     // Setters

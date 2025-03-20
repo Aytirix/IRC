@@ -23,6 +23,14 @@ public:
 		return ss.str();
 	}
 
+	static std::string getTime(std::string format = "%Y-%m-%d %H:%M:%S")
+	{
+		std::time_t now = std::time(0);
+		char *buf = new char[80];
+		std::strftime(buf, 80, format.c_str(), std::localtime(&now));
+		return std::string(buf);
+	}
+
 	static void write(Level level, const std::string &message)
 	{
 		std::string levelStr;
@@ -39,10 +47,7 @@ public:
 			break;
 		}
 
-		std::time_t now = std::time(0);
-		char buf[80];
-		std::strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-		std::string logEntry = "\033[32m[" + std::string(buf) + "] " + levelStr + ": " + message + "\033[0m";
+		std::string logEntry = "\033[32m[" + getTime() + "] " + levelStr + " : " + message + "\033[0m";
 
 		std::cout << logEntry << std::endl;
 	}

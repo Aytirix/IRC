@@ -29,7 +29,7 @@ public:
 	bool init();
 	void run();
 
-	void send_data(int client_fd, std::string data);
+	void send_data(int client_fd, std::string data, bool server_name = true, bool date = true);
 
 	// Getters
 	int getPort() const { return port_; }

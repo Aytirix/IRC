@@ -142,20 +142,27 @@ void Server::handleClientData(int client_fd)
 	{
 		std::string command = buffer.substr(0, pos);
 		buffer.erase(0, pos + 1);
-
-		std::cout << "cmd : " << client_fd << " : '" << command << "'" << std::endl;
-
 		Parsing parsing(*this);
 		if (parsing.init_parsing(client, command) == false)
 			return;
 	}
 }
 
-void Server::send_data(int client_fd, std::string data)
+void Server::send_data(int client_fd, std::string data, bool server_name, bool date)
 {
 	if (data.size() == 0 || data[data.size() - 1] != '\n')
 		data += '\n';
 
+	std::string name = "";
+	if (server_name)
+		name = SERVER_NAME;
+	if (date)
+	{
+		std::string time = log::getTime("%Y-%m-%dT%H:%M:%S.000Z");
+		data += "@time=" + time + " ";
+	}
+	data += name + data;
+	std::cout << "send_data : " << data << std::endl;
 	ssize_t bytes = write(client_fd, data.c_str(), data.size());
 	if (bytes < 0)
 		perror("write");
