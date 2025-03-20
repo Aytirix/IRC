@@ -25,10 +25,12 @@ Vous pouvez consulter le Figma du projet en suivant [ce lien](https://www.figma.
 
 1. **Lancer IRSSI** avec la commande suivante :
 
-	Cette commande se connecte à votre serveur IRC local :
+	Installer le client Hexchat :
 
 	```bash
-	irssi -c localhost -p <port> -n <pseudo> -w <password>
+	flatpak remote-add --user flathub https://flathub.org/repo/flathub.flatpakrepo
+ 	flatpak --user install flathub io.github.Hexchat
+ 	flatpak run io.github.Hexchat
 	```
 
  	```bash
