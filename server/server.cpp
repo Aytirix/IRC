@@ -3,7 +3,7 @@
 #include "../client/client.hpp"
 
 Server::Server(int port, const std::string &password)
-	: listen_fd_(-1), port_(port), password_(password)
+	: listen_fd_(-1), port_(port), password_(Hasher::hash(password))
 {
 }
 
@@ -90,7 +90,6 @@ void Server::handleNewConnection()
 			perror("accept");
 		return;
 	}
-	// Configuration du socket client en mode non bloquant
 	if (!setNonBlocking(client_fd))
 	{
 		perror("setNonBlocking client");
@@ -105,22 +104,28 @@ void Server::handleNewConnection()
 	std::cout << "Nouvelle connexion : fd " << client_fd << std::endl;
 }
 
+void Server::DisconnectClient(Client &client)
+{
+	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
+	close(client.getSocketFd());
+	clients_.erase(client.getSocketFd());
+}
+
 void Server::handleClientData(int client_fd)
 {
+	// Lire les données reçues
 	char tempBuffer[1024];
 	int n = read(client_fd, tempBuffer, sizeof(tempBuffer) - 1);
 	if (n <= 0)
 	{
-		if (n == 0)
-			std::cout << "Client déconnecté : fd " << client_fd << std::endl;
-		else
+		if (n < 0)
 			perror("read");
-		close(client_fd);
-		clients_.erase(client_fd);
+		this->DisconnectClient(clients_[client_fd]);
 		return;
 	}
 	tempBuffer[n] = '\0';
 
+	// Ajouter les données reçues au buffer du client
 	std::map<int, Client>::iterator it = clients_.find(client_fd);
 	if (it == clients_.end())
 	{
@@ -129,22 +134,20 @@ void Server::handleClientData(int client_fd)
 	}
 	Client &client = it->second;
 	std::string &buffer = client.getBuffer();
-
 	buffer.append(tempBuffer);
 
 	// Tant qu'une commande complète (délimitée par '\n') est présente, on la traite
 	std::string::size_type pos;
 	while ((pos = buffer.find("\n")) != std::string::npos)
 	{
-		// Extraction de la commande (on peut également gérer '\r' si nécessaire)
-		std::string command = buffer.substr(0, pos - 1);
-		// Supprimer la commande traitée du buffer
+		std::string command = buffer.substr(0, pos);
 		buffer.erase(0, pos + 1);
 
 		std::cout << "cmd : " << client_fd << " : '" << command << "'" << std::endl;
 
-		Parsing parsing;
-		parsing.init_parsing(client, command);
+		Parsing parsing(*this);
+		if (parsing.init_parsing(client, command) == false)
+			return;
 	}
 }
 
@@ -152,6 +155,7 @@ void Server::send_data(int client_fd, std::string data)
 {
 	if (data.size() == 0 || data[data.size() - 1] != '\n')
 		data += '\n';
+
 	ssize_t bytes = write(client_fd, data.c_str(), data.size());
 	if (bytes < 0)
 		perror("write");

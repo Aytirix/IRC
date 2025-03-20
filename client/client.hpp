@@ -14,6 +14,7 @@ private:
     std::string username;
 	std::string buffer;
 public:
+	Client();
     Client(pollfd socket_fd);
     ~Client();
 
@@ -24,7 +25,8 @@ public:
 	std::string &getBuffer() { return this->buffer; }
 
     // Setters
-    void setUsername(const std::string &username);
+    void setUsername(const std::string &username) { this->username = username; }
+	void setSocketPfd(pollfd pfd) { this->pfd = pfd; }
 };
 
 #endif
