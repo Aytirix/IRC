@@ -23,7 +23,7 @@ Vous pouvez consulter le Figma du projet en suivant [ce lien](https://www.figma.
 
 ## Se connecter avec un client IRC
 
-1. **Lancer IRSSI** avec la commande suivante :
+1. **Installer Hexchat** avec la commande suivante :
 
 	Installer le client Hexchat :
 
