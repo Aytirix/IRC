@@ -6,6 +6,27 @@ Parsing::Parsing(Server &server) : server(server) {}
 Parsing::~Parsing() {}
 
 /*
+** split
+** Split une string en fonction d'un délimiteur
+** @param str : la string à split
+** @param delim : le délimiteur
+** @return un vector contenant les morceaux de la string
+*/
+std::vector<std::string> Parsing::split(const std::string &str, char delim)
+{
+	std::vector<std::string> elems;
+	std::stringstream ss(str);
+	std::string item;
+
+	while (std::getline(ss, item, delim))
+	{
+		if (item.size() > 0)
+			elems.push_back(item);
+	}
+	return elems;
+}
+
+/*
 ** RemoveHiddenChar
 ** Supprime les caractères cachés '\r' et '\n' d'une string
 ** @param str : la string à nettoyer
@@ -29,30 +50,36 @@ std::string Parsing::RemoveHiddenChar(std::string &str)
 bool Parsing::init_parsing(Client &client, std::string &buffer)
 {
 	buffer = RemoveHiddenChar(buffer);
-	std::cout << "cmd : fd client " << client.getSocketFd() << " : '" << buffer << "'" << std::endl;
+	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 	// TYPE DE FORMAT QUAND ON UTILISE SE CONNECTE
 	// Chaque ligne cmd est un nouvelle appelle a parsing
 	// Nouvelle connexion : fd 4
 	// cmd : fd client 4 : 'PASS test'
 	// cmd : fd client 4 : 'NICK test2'
 	// cmd : fd client 4 : 'USER thmouty thmouty localhost :Theo Mouty'
-	// si les CAP LS donc les 6 premiers charactere sont CAP LS
-	if (buffer.substr(0, 10) == "CAP LS 302")
+	if (buffer.substr(0, 3) == "CAP")
+		return capability(client, buffer);
+	if (std::string("PASS NICK USER").find(buffer.substr(0, 4)) != std::string::npos)
+		return InitializeUser(client, buffer);
+	else if (buffer.substr(0, 4) == "MODE")
 	{
-		server.send_data(client.getSocketFd(), "CAP * LS :chghost extended-join multi-prefix account-tag cap-notify", true, false);
+		std::string channel = buffer.substr(5, buffer.size() - 5);
+		server.send_data(client.getSocketFd(), "324 " + client.getNickname() + " " + channel + " +itkol");
 	}
-	else if (buffer.substr(0, 7) == "CAP REQ" || buffer.substr(0, 7) == "CAP END")
+	else if (buffer.substr(0, 4) == "JOIN")
 	{
-		static std::string cap = "";
-		if (buffer.substr(0, 7) == "CAP REQ")
-			cap = buffer.substr(8, buffer.size() - 8);
-		else if (buffer.substr(0, 7) == "CAP END")
-			server.send_data(client.getSocketFd(), " CAP thmouty1 ACK " + cap, true, false);
+		std::string channel = buffer.substr(5, buffer.size() - 5);
+
+		server.joinChannel(client, channel);
 	}
-	else if (buffer.substr(0, 4) == "PASS")
+	return true;
+}
+
+bool Parsing::InitializeUser(Client &client, std::string &buffer)
+{
+	if (buffer.substr(0, 4) == "PASS")
 	{
 		std::string password = buffer.substr(5, buffer.size() - 5);
-		std::cout << "password parsgin : '" << password << "'" << std::endl;
 		if (Hasher::compare(password, server.password_))
 			server.send_data(client.getSocketFd(), WELCOME(client.getNickname()));
 		else
@@ -63,20 +90,53 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 			return false;
 		}
 	}
-	else if (buffer.substr(0, 4) == "MODE")
+	else if (buffer.substr(0, 4) == "USER")
 	{
-		std::string channel = buffer.substr(5, buffer.size() - 5);
-		server.send_data(client.getSocketFd(), "324 " + client.getNickname() + " " + channel + " +itkol");
+		static bool initialized = false;
+		if (initialized)
+		{
+			server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
+			return true;
+		}
+		initialized = true;
+		std::string username = buffer.substr(5, buffer.size() - 5);
+		username = username.substr(0, username.find(" "));
+		client.setUserName(username);
+		username = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
+		client.setRealName(username);
 	}
 	else if (buffer.substr(0, 4) == "NICK")
 	{
 		std::string nickname = buffer.substr(5, buffer.size() - 5);
 		client.setNickname(nickname);
 	}
-	else if (buffer.substr(0, 4) == "JOIN")
+	return true;
+}
+
+/*
+** capability
+** Gère les commandes CAP
+** @param client : le client qui a envoyé la commande
+** @param buffer : la commande à parser
+*/
+bool Parsing::capability(Client &client, std::string &buffer)
+{
+	std::string caps = "chghost extended-join multi-prefix account-tag cap-notify";
+	if (buffer.substr(0, 10) == "CAP LS 302")
+		server.send_data(client.getSocketFd(), "CAP * LS :" + caps, true, false);
+	else if (buffer.substr(0, 7) == "CAP REQ")
 	{
-		std::string channel = buffer.substr(5, buffer.size() - 5);
-		server.joinChannel(client, channel);
+		std::string cap = buffer.substr(9, buffer.size() - 9);
+		std::vector<std::string> cap_req = Parsing::split(cap, ' ');
+		for (size_t i = 0; i < cap_req.size(); i++)
+		{
+			if (cap.find(cap_req[i]) == std::string::npos)
+			{
+				server.send_data(client.getSocketFd(), "CAP" + client.getNickname() + " NAK " + cap_req[i], true, false);
+				return true;
+			}
+		}
+		server.send_data(client.getSocketFd(), "CAP " + client.getNickname() + " ACK " + cap, true, false);
 	}
 	return true;
 }

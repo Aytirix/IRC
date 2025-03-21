@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include <arpa/inet.h>
 
 Server::Server(int port, const std::string &password)
 	: listen_fd_(-1), port_(port), password_(Hasher::hash(password))
@@ -94,7 +95,7 @@ bool Server::init()
 	Client listenClient(listen_pfd);
 	clients_.insert(std::make_pair(listen_fd_, listenClient));
 
-	std::cout << "Serveur démarré sur le port " << port_ << std::endl;
+	log::log::write(log::log::INFO, "Serveur démarré sur le port " + log::toString(port_));
 	return true;
 }
 
@@ -129,8 +130,10 @@ void Server::handleNewConnection()
 	client_pfd.fd = client_fd;
 	client_pfd.events = POLLIN;
 	Client client(client_pfd);
+	std::cout << "Nouvelle connexion : " << inet_ntoa(client_addr.sin_addr) << std::endl;
+	client.setIp(inet_ntoa(client_addr.sin_addr));
 	clients_.insert(std::make_pair(client_fd, client));
-	std::cout << "Nouvelle connexion : fd " << client_fd << std::endl;
+	log::write(log::RECEIVED, "Nouvelle connexion : fd(" + log::toString(client_fd) + ")");
 }
 
 void Server::DisconnectClient(Client &client)
@@ -184,17 +187,19 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 
 	std::string name = "";
 	if (server_name)
+	{
 		name = SERVER_NAME;
+		data.insert(0, name);
+	}
 	if (date)
 	{
-		std::string time = log::getTime("%Y-%m-%dT%H:%M:%S.000Z");
-		data += "@time=" + time + " ";
+		std::string time = log::getTime("%Y-%m-%dT%H:%M:%S");
+		data.insert(0, ":" + time + " ");
 	}
-	data += name + data;
+	log::write(log::SENT, " fd(" + log::toString(client_fd) + ") : '" + data + "'");
 	ssize_t bytes = write(client_fd, data.c_str(), data.size());
 	if (bytes < 0)
 		perror("write");
 	else if (bytes < (ssize_t)data.size())
 		std::cerr << "Erreur : données partiellement envoyées" << std::endl;
 }
-

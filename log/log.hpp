@@ -13,7 +13,9 @@ public:
 	{
 		INFO,
 		WARNING,
-		ERROR
+		ERROR,
+		RECEIVED,
+		SENT
 	};
 
 	static std::string toString(int value)
@@ -44,6 +46,12 @@ public:
 			break;
 		case ERROR:
 			levelStr = "\033[31mERROR";
+			break;
+		case RECEIVED:
+			levelStr = "\033[35mRECEIVED";
+			break;
+		case SENT:
+			levelStr = "\033[96mSENT";
 			break;
 		}
 

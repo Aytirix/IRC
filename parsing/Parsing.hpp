@@ -18,6 +18,9 @@ class Parsing
 {
 private:
 	Server &server;
+
+	bool capability(Client &client, std::string &buffer);
+	bool InitializeUser(Client &client, std::string &buffer);
 public:
 	Parsing(Server &server);
 
@@ -25,6 +28,7 @@ public:
 
 	bool init_parsing(Client &client, std::string &buffer);
 	std::string RemoveHiddenChar(std::string &str);
+	std::vector<std::string> split(const std::string &str, char delim);
 };
 
 #endif
