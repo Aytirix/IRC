@@ -39,13 +39,15 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	// si les CAP LS donc les 6 premiers charactere sont CAP LS
 	if (buffer.substr(0, 10) == "CAP LS 302")
 	{
-		server.send_data(client.getSocketFd(), "CAP * LS :account-notify away-notify chghost extended-join multi-prefix sasl=ECDSA-NIST256P-CHALLENGE,EXTERNAL,PLAIN,SCRAM-SHA-512 tls account-tag cap-notify echo-message server-time solanum.chat/identify-msg solanum.chat/oper solanum.chat/realhost", true, false);
+		server.send_data(client.getSocketFd(), "CAP * LS :chghost extended-join multi-prefix account-tag cap-notify", true, false);
 	}
-	else if (buffer.substr(0, 7) == "CAP REQ")
+	else if (buffer.substr(0, 7) == "CAP REQ" || buffer.substr(0, 7) == "CAP END")
 	{
-		// a finir
-		// attendre la fin de cap req
-		server.send_data(client.getSocketFd(), " CAP thmouty1 ACK :account-notify away-notify chghost extended-join multi-prefix account-tag cap-notify server-time solanum.chat/identify-msg", true, false);
+		static std::string cap = "";
+		if (buffer.substr(0, 7) == "CAP REQ")
+			cap = buffer.substr(8, buffer.size() - 8);
+		else if (buffer.substr(0, 7) == "CAP END")
+			server.send_data(client.getSocketFd(), " CAP thmouty1 ACK " + cap, true, false);
 	}
 	else if (buffer.substr(0, 4) == "PASS")
 	{
@@ -61,12 +63,20 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 			return false;
 		}
 	}
+	else if (buffer.substr(0, 4) == "MODE")
+	{
+		std::string channel = buffer.substr(5, buffer.size() - 5);
+		server.send_data(client.getSocketFd(), "324 " + client.getNickname() + " " + channel + " +itkol");
+	}
+	else if (buffer.substr(0, 4) == "NICK")
+	{
+		std::string nickname = buffer.substr(5, buffer.size() - 5);
+		client.setNickname(nickname);
+	}
 	else if (buffer.substr(0, 4) == "JOIN")
 	{
-		// des tests pour essayer de comprendre mdrr
-		// server.send_data(client.getSocketFd(), ":thmouty1 JOIN my_test * :realname", false, true);
-		// server.send_data(client.getSocketFd(), ":thmouty1 353 thmouty1 @ #my_test :gacavali @thmouty1", false, true);
-		// server.send_data(client.getSocketFd(), "366 thmouty1 #my_test :End of /NAMES list.");
+		std::string channel = buffer.substr(5, buffer.size() - 5);
+		server.joinChannel(client, channel);
 	}
 	return true;
 }

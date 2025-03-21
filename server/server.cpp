@@ -1,6 +1,4 @@
 #include "server.hpp"
-#include "../parsing/Parsing.hpp"
-#include "../client/client.hpp"
 
 Server::Server(int port, const std::string &password)
 	: listen_fd_(-1), port_(port), password_(Hasher::hash(password))
@@ -13,14 +11,35 @@ Server::~Server()
 		close(it->first);
 }
 
-bool Server::setNonBlocking(int fd)
+void Server::run()
 {
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1)
-		return false;
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		return false;
-	return true;
+	while (true)
+	{
+		// Reconstruire le tableau de pollfd à partir de la map
+		std::vector<pollfd> pollfds;
+		for (std::map<int, Client>::iterator it = clients_.begin(); it != clients_.end(); ++it)
+		{
+			pollfds.push_back(it->second.getSocketPfd());
+		}
+		int ret = poll(&pollfds[0], pollfds.size(), -1);
+		if (ret < 0)
+		{
+			perror("poll");
+			break;
+		}
+		// Parcourir les descripteurs ayant généré un événement
+		for (size_t i = 0; i < pollfds.size(); ++i)
+		{
+			if (pollfds[i].revents & POLLIN)
+			{
+				int fd = pollfds[i].fd;
+				if (fd == listen_fd_)
+					handleNewConnection();
+				else
+					handleClientData(fd);
+			}
+		}
+	}
 }
 
 bool Server::init()
@@ -76,6 +95,16 @@ bool Server::init()
 	clients_.insert(std::make_pair(listen_fd_, listenClient));
 
 	std::cout << "Serveur démarré sur le port " << port_ << std::endl;
+	return true;
+}
+
+bool Server::setNonBlocking(int fd)
+{
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags == -1)
+		return false;
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		return false;
 	return true;
 }
 
@@ -162,7 +191,6 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 		data += "@time=" + time + " ";
 	}
 	data += name + data;
-	std::cout << "send_data : " << data << std::endl;
 	ssize_t bytes = write(client_fd, data.c_str(), data.size());
 	if (bytes < 0)
 		perror("write");
@@ -170,33 +198,3 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 		std::cerr << "Erreur : données partiellement envoyées" << std::endl;
 }
 
-void Server::run()
-{
-	while (true)
-	{
-		// Reconstruire le tableau de pollfd à partir de la map
-		std::vector<pollfd> pollfds;
-		for (std::map<int, Client>::iterator it = clients_.begin(); it != clients_.end(); ++it)
-		{
-			pollfds.push_back(it->second.getSocketPfd());
-		}
-		int ret = poll(&pollfds[0], pollfds.size(), -1);
-		if (ret < 0)
-		{
-			perror("poll");
-			break;
-		}
-		// Parcourir les descripteurs ayant généré un événement
-		for (size_t i = 0; i < pollfds.size(); ++i)
-		{
-			if (pollfds[i].revents & POLLIN)
-			{
-				int fd = pollfds[i].fd;
-				if (fd == listen_fd_)
-					handleNewConnection();
-				else
-					handleClientData(fd);
-			}
-		}
-	}
-}

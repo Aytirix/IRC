@@ -16,9 +16,11 @@
 #include "../parsing/Parsing.hpp"
 #include "../client/client.hpp"
 #include "../log/log.hpp"
+#include "../channel/channel.hpp"
 #include "hasher.hpp"
 
 class Parsing;
+class Channel;
 
 class Server
 {
@@ -30,6 +32,7 @@ public:
 	void run();
 
 	void send_data(int client_fd, std::string data, bool server_name = true, bool date = true);
+	void joinChannel(Client &client, std::string &channelName);
 
 	// Getters
 	int getPort() const { return port_; }
@@ -39,6 +42,7 @@ private:
 	int port_;
 	unsigned long password_;
 	std::map<int, Client> clients_;
+	std::map<std::string, Channel> channels_;
 
 	bool setNonBlocking(int fd);
 	void handleNewConnection();

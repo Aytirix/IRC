@@ -11,7 +11,7 @@ class Client
 {
 private:
     pollfd pfd;
-    std::string username;
+    std::string _nickName;
 	std::string buffer;
 public:
 	Client();
@@ -21,11 +21,11 @@ public:
     // Getters
     pollfd getSocketPfd() const { return this->pfd; }
     int getSocketFd() const { return this->pfd.fd; }
-    std::string getNickname() const { return this->username; }
+    std::string getNickname() const { return this->_nickName; }
 	std::string &getBuffer() { return this->buffer; }
 
     // Setters
-    void setUsername(const std::string &username) { this->username = username; }
+    void setNickname(const std::string &username) { this->_nickName = username; }
 	void setSocketPfd(pollfd pfd) { this->pfd = pfd; }
 };
 

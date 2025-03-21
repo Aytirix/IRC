@@ -6,6 +6,7 @@ CFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 -fsanitize=address
 SRCS = main.cpp \
 		server/server.cpp \
 		client/client.cpp \
+		channel/channel.cpp \
 		parsing/Parsing.cpp
 
 OBJ_DIR = obj
