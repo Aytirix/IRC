@@ -19,8 +19,6 @@ class Parsing
 private:
 	Server &server;
 
-	bool capability(Client &client, std::string &buffer);
-	bool InitializeUser(Client &client, std::string &buffer);
 public:
 	Parsing(Server &server);
 

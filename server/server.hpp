@@ -32,7 +32,6 @@ public:
 	void run();
 
 	void send_data(int client_fd, std::string data, bool server_name = true, bool date = true);
-	void joinChannel(Client &client, std::string &channelName);
 
 	// Getters
 	int getPort() const { return port_; }
