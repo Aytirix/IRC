@@ -1,13 +1,30 @@
 #include <iostream>
 #include "server/server.hpp"
+#include "log/Colors.hpp"
 #include <stdlib.h>
 #include <stdexcept>
 #include <string>
 
+void font()
+{
+	std::cout << BRIGHT_RED "██ ██████   ██████" << std::endl;
+	std::cout << "██ ██   ██ ██" << std::endl;
+	std::cout << "██ ██████  ██" << std::endl;
+	std::cout << "██ ██   ██ ██" << std::endl;
+	std::cout << "██ ██   ██  ██████" << std::endl << std::endl << std::endl;
+
+
+	std::cout << "███████ ███████ ██████  ██    ██ ███████ ██████" << std::endl;
+	std::cout << "██      ██      ██   ██ ██    ██ ██      ██   ██" << std::endl;
+	std::cout << "███████ █████   ██████  ██    ██ █████   ██████" << std::endl;
+	std::cout << "     ██ ██      ██   ██  ██  ██  ██      ██   ██" << std::endl;
+	std::cout << "███████ ███████ ██   ██   ████   ███████ ██   ██" RESET<< std::endl << std::endl;
+}
+
 int main(int ac, char **av)
 {
 	system("clear");
-	std::cout << "\033[2J\033[1;1H" << "\033[32m" << "IRC Server" << "\033[0m" << std::endl;
+	font();
 	if (ac != 3)
 	{
 		std::cerr << "Usage: ./ircserv <port> <password>" << std::endl;

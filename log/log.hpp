@@ -5,6 +5,7 @@
 #include <ctime>
 #include <iostream>
 #include <sstream>
+#include "Colors.hpp"
 
 class log
 {
@@ -15,7 +16,8 @@ public:
 		WARNING,
 		ERROR,
 		RECEIVED,
-		SENT
+		SENT,
+		DEBUG
 	};
 
 	static std::string toString(int value)
@@ -39,23 +41,26 @@ public:
 		switch (level)
 		{
 		case INFO:
-			levelStr = "\033[34mINFO";
+			levelStr = BLUE "INFO";
 			break;
 		case WARNING:
-			levelStr = "\033[33mWARNING";
+			levelStr = YELLOW "WARNING";
 			break;
 		case ERROR:
-			levelStr = "\033[31mERROR";
+			levelStr = RED "ERROR";
 			break;
 		case RECEIVED:
-			levelStr = "\033[35mRECEIVED";
+			levelStr = MAGENTA "RECEIVED";
 			break;
 		case SENT:
-			levelStr = "\033[96mSENT";
+			levelStr = BRIGHT_CYAN "SENT";
+			break;
+		case DEBUG:
+			levelStr = BRIGHT_YELLOW "DEBUG";
 			break;
 		}
 
-		std::string logEntry = "\033[32m[" + getTime() + "] " + levelStr + " : " + message + "\033[0m";
+		std::string logEntry = GREEN "[" + getTime() + "] " + levelStr + " : " + message + RESET;
 
 		std::cout << logEntry << std::endl;
 	}

@@ -27,6 +27,13 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 
+
+start: all
+	-fuser -k 6667/tcp
+	./$(NAME) 6667 password
+
+restart: re start
+
 re: fclean all
 
 .PHONY: all clean fclean re

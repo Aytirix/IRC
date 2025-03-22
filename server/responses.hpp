@@ -1,4 +1,3 @@
-
 #ifndef RESPONSES_HPP
 #define RESPONSES_HPP
 

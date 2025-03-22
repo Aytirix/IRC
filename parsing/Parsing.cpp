@@ -51,12 +51,7 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 {
 	buffer = RemoveHiddenChar(buffer);
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
-	// TYPE DE FORMAT QUAND ON UTILISE SE CONNECTE
-	// Chaque ligne cmd est un nouvelle appelle a parsing
-	// Nouvelle connexion : fd 4
-	// cmd : fd client 4 : 'PASS test'
-	// cmd : fd client 4 : 'NICK test2'
-	// cmd : fd client 4 : 'USER thmouty thmouty localhost :Theo Mouty'
+
 	if (buffer.substr(0, 3) == "CAP")
 		return capability(client, buffer);
 	if (std::string("PASS NICK USER").find(buffer.substr(0, 4)) != std::string::npos)
@@ -69,7 +64,6 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	else if (buffer.substr(0, 4) == "JOIN")
 	{
 		std::string channel = buffer.substr(5, buffer.size() - 5);
-
 		server.joinChannel(client, channel);
 	}
 	return true;
@@ -80,9 +74,7 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 	if (buffer.substr(0, 4) == "PASS")
 	{
 		std::string password = buffer.substr(5, buffer.size() - 5);
-		if (Hasher::compare(password, server.password_))
-			server.send_data(client.getSocketFd(), WELCOME(client.getNickname()));
-		else
+		if (!Hasher::compare(password, server.password_))
 		{
 			log::write(log::INFO, "L'utilisateur : fd(" + log::toString(client.getSocketFd()) + ") a rentré un mauvais mot de passe");
 			server.send_data(client.getSocketFd(), ERR_PASSWD_MISMATCH);
@@ -92,13 +84,11 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 	}
 	else if (buffer.substr(0, 4) == "USER")
 	{
-		static bool initialized = false;
-		if (initialized)
+		if (client.getUserName().size() > 0)
 		{
 			server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
 			return true;
 		}
-		initialized = true;
 		std::string username = buffer.substr(5, buffer.size() - 5);
 		username = username.substr(0, username.find(" "));
 		client.setUserName(username);
@@ -116,6 +106,8 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 /*
 ** capability
 ** Gère les commandes CAP
+** Si une commande CAP LS 302 est reçue, on envoie la liste des capabilities
+** Si une commande CAP REQ est reçue, on vérifie que les capabilities demandées sont bien supportées
 ** @param client : le client qui a envoyé la commande
 ** @param buffer : la commande à parser
 */
@@ -130,13 +122,15 @@ bool Parsing::capability(Client &client, std::string &buffer)
 		std::vector<std::string> cap_req = Parsing::split(cap, ' ');
 		for (size_t i = 0; i < cap_req.size(); i++)
 		{
-			if (cap.find(cap_req[i]) == std::string::npos)
+			if (!(cap.find(cap_req[i]) != std::string::npos))
 			{
 				server.send_data(client.getSocketFd(), "CAP" + client.getNickname() + " NAK " + cap_req[i], true, false);
 				return true;
 			}
 		}
-		server.send_data(client.getSocketFd(), "CAP " + client.getNickname() + " ACK " + cap, true, false);
+		server.send_data(client.getSocketFd(), "CAP " + client.getNickname() + " ACK :" + cap, true, false);
 	}
+	else if (buffer.substr(0, 7) == "CAP END")
+		server.send_data(client.getSocketFd(), "001 " + std::string(WELCOME(client.getNickname())), true, false);
 	return true;
 }
