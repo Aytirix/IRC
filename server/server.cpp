@@ -203,7 +203,7 @@ void Server::handleClientData(int client_fd)
 	std::string::size_type pos;
 	while ((pos = buffer.find("\n")) != std::string::npos)
 	{
-		std::string command = buffer.substr(0, pos);
+		std::string command = buffer.substr(0, pos + 1); //error de position j ai mis + 1
 		buffer.erase(0, pos + 1);
 		Parsing parsing(*this);
 		if (parsing.init_parsing(client, command) == false)
@@ -234,8 +234,8 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 
 	log::write(log::SENT, " fd(" + log::toString(client_fd) + ") : '" + data + "'");
 
-	if (data.size() == 0 || data[data.size() - 1] != '\n')
-		data += '\n';
+	// if (data.size() == 0 || data[data.size() - 1] != '\n')
+	// 	data += '\n';
 
 	ssize_t bytes = write(client_fd, data.c_str(), data.size());
 	if (bytes < 0)

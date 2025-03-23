@@ -61,7 +61,6 @@ public:
 		}
 
 		std::string logEntry = GREEN "[" + getTime() + "] " + levelStr + " : " + message + RESET;
-
 		std::cout << logEntry << std::endl;
 	}
 };
