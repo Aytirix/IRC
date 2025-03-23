@@ -1,0 +1,275 @@
+Gtk-Message: 17:24:31.091: Failed to load module "atk-bridge"
+Gtk-Message: 17:24:31.094: Failed to load module "canberra-gtk-module"
+The program 'hexchat' received an X Window System error.
+This probably reflects a bug in the program.
+The error was 'BadAlloc (insufficient resources for operation)'.
+  (Details: serial 1454312 error_code 11 request_code 53 minor_code 0)
+  (Note to programmers: normally, X errors are reported asynchronously;
+   that is, you will receive the error a while after causing it.
+   To debug your program, run it with the --sync command line
+   option to change this behavior. You can then get a meaningful
+   backtrace from your debugger if you break on the gdk_x_error() function.)
+Gtk-Message: 18:11:15.141: Failed to load module "atk-bridge"
+Gtk-Message: 18:11:15.144: Failed to load module "canberra-gtk-module"
+Gtk-Message: 14:01:03.082: Failed to load module "atk-bridge"
+Gtk-Message: 14:01:03.148: Failed to load module "canberra-gtk-module"
+
+** (hexchat:2): WARNING **: 14:21:06.807: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:06.807: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.592: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.592: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.600: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.600: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.610: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.610: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.617: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.617: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.626: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.626: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.630: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.630: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.642: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.642: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.652: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.652: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.656: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.656: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.666: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.666: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.672: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.672: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.682: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.682: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.686: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.686: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.695: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.695: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.706: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.706: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.711: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.711: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.721: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.721: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.726: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.726: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.735: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.735: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.746: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.746: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.753: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.753: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.757: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.757: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.769: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.769: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.780: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.780: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.785: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.785: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.794: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.794: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.801: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.801: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.810: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.810: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.814: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.814: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.824: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.824: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.834: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.834: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.841: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.841: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.851: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.851: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.855: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.855: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.863: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.863: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.873: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.873: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.879: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.879: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.891: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.891: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.895: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.895: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.906: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.906: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.911: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.911: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.921: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.921: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.935: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.935: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.945: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.945: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.951: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.951: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.961: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.961: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.975: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.975: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.985: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.985: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.991: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:09.991: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.001: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.001: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.005: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.005: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.015: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.015: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.159: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.159: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.174: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.174: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.194: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.194: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.224: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 14:21:10.224: invalid source position for vertical gradient
+Gtk-Message: 15:08:07.227: Failed to load module "atk-bridge"
+Gtk-Message: 15:08:07.346: Failed to load module "canberra-gtk-module"
+
+** (hexchat:2): WARNING **: 16:49:13.358: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 16:49:13.358: invalid source position for vertical gradient
+Gtk-Message: 16:58:12.270: Failed to load module "atk-bridge"
+Gtk-Message: 16:58:12.279: Failed to load module "canberra-gtk-module"
+
+** (hexchat:2): WARNING **: 17:00:36.827: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:00:36.827: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:00:36.846: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:00:36.847: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:01:04.408: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:01:04.408: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:01:04.427: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:01:04.427: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:25:42.937: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:25:42.937: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:25:42.953: invalid source position for vertical gradient
+
+** (hexchat:2): WARNING **: 17:25:42.953: invalid source position for vertical gradient

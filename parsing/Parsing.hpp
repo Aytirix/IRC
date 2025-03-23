@@ -21,6 +21,15 @@ private:
 
 	bool capability(Client &client, std::string &buffer);
 	bool InitializeUser(Client &client, std::string &buffer);
+	bool check_enough_params(Client &client, std::string &buffer);
+	bool IsRegistered(Client &client, std::string &buffer);
+
+	// CHANNEL
+	void Who(Client &client, std::string &buffer);
+	void joinChannel(Client &client, std::string &channelName);
+	void partChannel(Client &client, std::string &channelName, std::string &message);
+
+
 public:
 	Parsing(Server &server);
 

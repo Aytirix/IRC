@@ -18,6 +18,11 @@ public:
 	{
 		return Hasher::hash(password) == passwordserver;
 	}
+
+	static bool compare(const unsigned long password, const unsigned long passwordserver)
+	{
+		return password == passwordserver;
+	}
 };
 
 #endif

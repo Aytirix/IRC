@@ -34,6 +34,9 @@ start: all
 
 restart: re start
 
+hexchat:
+	nohup flatpak run io.github.Hexchat &>/dev/null &
+
 re: fclean all
 
 .PHONY: all clean fclean re

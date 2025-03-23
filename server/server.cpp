@@ -4,6 +4,9 @@
 Server::Server(int port, const std::string &password)
 	: listen_fd_(-1), port_(port), password_(Hasher::hash(password))
 {
+	// initialiser la map des clients
+	clients_.clear();
+	channels_.clear();
 }
 
 Server::~Server()
@@ -150,10 +153,9 @@ void Server::handleNewConnection()
 	client_pfd.fd = client_fd;
 	client_pfd.events = POLLIN;
 	Client client(client_pfd);
-	std::cout << "Nouvelle connexion : " << inet_ntoa(client_addr.sin_addr) << std::endl;
 	client.setIp(inet_ntoa(client_addr.sin_addr));
 	clients_.insert(std::make_pair(client_fd, client));
-	log::write(log::RECEIVED, "Nouvelle connexion : fd(" + log::toString(client_fd) + ")");
+	log::write(log::INFO, "Nouvelle connexion : fd(" + log::toString(client_fd) + ")");
 }
 
 /*
@@ -207,7 +209,12 @@ void Server::handleClientData(int client_fd)
 		buffer.erase(0, pos + 1);
 		Parsing parsing(*this);
 		if (parsing.init_parsing(client, command) == false)
+		{
+			// verifier que le client a bien été supprimé
+			if (clients_.find(client_fd) != clients_.end())
+				DisconnectClient(client);
 			return;
+		}
 	}
 }
 
@@ -220,16 +227,12 @@ void Server::handleClientData(int client_fd)
  */
 void Server::send_data(int client_fd, std::string data, bool server_name, bool date)
 {
-	std::string name = "";
 	if (server_name)
-	{
-		name = SERVER_NAME;
-		data.insert(0, name);
-	}
+		data.insert(0, std::string(SERVER_NAME));
 	if (date)
 	{
-		std::string time = log::getTime("%Y-%m-%dT%H:%M:%S");
-		data.insert(0, ":" + time + " ");
+		std::string time = log::getTime("%Y-%m-%dT%H:%M:%S.000Z");
+		data.insert(0, "@time=" + time + " ");
 	}
 
 	log::write(log::SENT, " fd(" + log::toString(client_fd) + ") : '" + data + "'");

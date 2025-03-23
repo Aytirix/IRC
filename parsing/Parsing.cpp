@@ -34,11 +34,64 @@ std::vector<std::string> Parsing::split(const std::string &str, char delim)
 */
 std::string Parsing::RemoveHiddenChar(std::string &str)
 {
+	while (str[0] == ' ')
+		str.erase(0, 1);
 	if (str.find("\r") != std::string::npos)
 		str.erase(str.find("\r"), 1);
 	if (str.find("\n") != std::string::npos)
 		str.erase(str.find("\n"), 1);
 	return str;
+}
+
+/*
+** check_enough_params
+** Vérifie si une commande a assez de paramètres
+** @param client : le client qui a envoyé la commande
+** @param buffer : la commande à vérifier
+** @return true si la commande a assez de paramètres, false sinon
+*/
+bool Parsing::check_enough_params(Client &client, std::string &buffer)
+{
+	size_t space_pos = buffer.find(" ");
+
+	if (space_pos == std::string::npos)
+	{
+		server.send_data(client.getSocketFd(), NOT_ENOUGH_PARAMS(client.getNickname(), buffer));
+		return false;
+	}
+
+	// Laisser juste une espace entre le premier paramètre et le premier argument
+	while (space_pos + 1 < buffer.size() && buffer[space_pos + 1] == ' ')
+		buffer.erase(space_pos + 1, 1);
+
+	if (space_pos + 1 == buffer.size())
+	{
+		server.send_data(client.getSocketFd(), NOT_ENOUGH_PARAMS(client.getNickname(), buffer));
+		return false;
+	}
+	return true;
+}
+
+/*
+** IsRegistered
+** Vérifie si le client est bien enregistré, si ce n'est pas le cas,
+** et que le client envoie une commande qui nécessite d'être enregistré,
+** on envoie un message d'erreur
+** @param client : le client à vérifier
+** @param buffer : la commande à vérifier
+** @return true si le client est enregistré, false sinon
+*/
+bool Parsing::IsRegistered(Client &client, std::string &buffer)
+{
+	if (std::string("PASS NICK USER QUIT").find(buffer.substr(0, 4)) == std::string::npos && std::string("CAP").find(buffer.substr(0, 3)) == std::string::npos)
+	{
+		if (client.getNickname().size() == 0)
+		{
+			server.send_data(client.getSocketFd(), ERR_NOTREGISTERED());
+			return false;
+		}
+	}
+	return true;
 }
 
 /*
@@ -52,27 +105,103 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	buffer = RemoveHiddenChar(buffer);
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 
+	if (!IsRegistered(client, buffer))
+		return true;
+
 	if (buffer.substr(0, 3) == "CAP")
 		return capability(client, buffer);
-	if (std::string("PASS NICK USER").find(buffer.substr(0, 4)) != std::string::npos)
+	else if (std::string("PASS NICK USER").find(buffer.substr(0, 4)) != std::string::npos)
 		return InitializeUser(client, buffer);
 	else if (buffer.substr(0, 4) == "MODE")
 	{
+		if (!check_enough_params(client, buffer))
+			return true;
 		std::string channel = buffer.substr(5, buffer.size() - 5);
-		server.send_data(client.getSocketFd(), "324 " + client.getNickname() + " " + channel + " +itkol");
+		server.send_data(client.getSocketFd(), ALL_MODES(channel));
 	}
 	else if (buffer.substr(0, 4) == "JOIN")
 	{
+		if (!check_enough_params(client, buffer))
+			return true;
 		std::string channel = buffer.substr(5, buffer.size() - 5);
-		server.joinChannel(client, channel);
+		this->joinChannel(client, channel);
 	}
+	else if (buffer.substr(0, 3) == "WHO")
+		this->Who(client, buffer);
+	else if (buffer.substr(0, 4) == "PART")
+	{
+		if (!check_enough_params(client, buffer))
+			return true;
+		std::string channel = buffer.substr(5, buffer.find(" ", 5) - 5);
+		// On récupère le message s'il y en a un
+		size_t colon_pos = buffer.find(":");
+		std::string message = (colon_pos != std::string::npos) ? buffer.substr(colon_pos, buffer.size() - colon_pos) : "";
+		this->partChannel(client, channel, message);
+	}
+	else if (buffer.substr(0, 4) == "QUIT")
+	{
+		std::string message = buffer.substr(5, buffer.size() - 5);
+		server.DisconnectClient(client, message);
+	}
+	else
+		server.send_data(client.getSocketFd(), ERR_UNKNOWNCOMMAND(client.getNickname(), buffer.substr(0, buffer.find(" ", 0))));
 	return true;
+}
+
+void Parsing::Who(Client &client, std::string &buffer)
+{
+	if (!check_enough_params(client, buffer))
+		return ;
+	std::string channel = buffer.substr(4, buffer.find(" ", 4) - 4);
+	std::cout << "WHO " << channel << std::endl;
+	std::map<std::string, Channel>::iterator it = server.channels_.find(channel);
+	if (it == server.channels_.end())
+	{
+		server.send_data(client.getSocketFd(), "315 " + client.getNickname() + " " + channel + " :End of /WHO list");
+		return ;
+	}
+	std::string list_users = it->second.getAllClientsString();
+	server.send_data(client.getSocketFd(), "353 " + client.getNickname() + " @ " + channel + " :" + list_users);
+	server.send_data(client.getSocketFd(), "366 " + client.getNickname() + " " + channel + " :End of /NAMES list");
+}
+
+void Parsing::partChannel(Client &client, std::string &channelName, std::string &message)
+{
+	for (std::map<std::string, Channel>::iterator it = server.channels_.begin(); it != server.channels_.end(); ++it)
+	{
+		if (it->first == channelName)
+		{
+			if (it->second.removeClient(client) == false)
+				break;
+			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), channelName, message));
+			return;
+		}
+		server.send_data(client.getSocketFd(), USER_NOT_IN_CHANNEL(client.getNickname(), channelName));
+	}
+}
+
+void Parsing::joinChannel(Client &client, std::string &channelName)
+{
+	std::map<std::string, Channel>::iterator it = server.channels_.find(channelName);
+	if (it == server.channels_.end())
+	{
+		Channel channel(server, channelName, client);
+		server.channels_.insert(std::make_pair(channelName, channel));
+	}
+	else
+		it->second.addClient(client);
+	server.send_data(client.getSocketFd(), USER_JOIN_CHANNEL(client.getUniqueName(), channelName), false, true);
 }
 
 bool Parsing::InitializeUser(Client &client, std::string &buffer)
 {
 	if (buffer.substr(0, 4) == "PASS")
 	{
+		if (client.getUserName().size() > 0)
+		{
+			server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
+			return true;
+		}
 		std::string password = buffer.substr(5, buffer.size() - 5);
 		if (!Hasher::compare(password, server.password_))
 		{
@@ -98,7 +227,24 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 	else if (buffer.substr(0, 4) == "NICK")
 	{
 		std::string nickname = buffer.substr(5, buffer.size() - 5);
+		std::cout << "NICK " << nickname << std::endl;
+		// Si le nickname est déjà utilisé
+		for (std::map<int, Client>::iterator it = server.clients_.begin(); it != server.clients_.end(); ++it)
+		{
+			if (it->second.getNickname() != "" && it->second.getNickname() == nickname)
+			{
+				std::cout << "ERR_NICKNAME_IN_USE '" << it->second.getNickname() << "' | '" << nickname << "'" << std::endl;
+				std::string nick = client.getNickname() != "" ? client.getNickname() + " " : "";
+				std::cout << "ERR_NICKNAME_IN_USE '" << nick << "' | '" << nickname << "'" << std::endl;
+				server.send_data(client.getSocketFd(), ERR_NICKNAME_IN_USE(nick, nickname));
+				return true;
+			}
+		}
+		std::string tmp = client.getNickname();
 		client.setNickname(nickname);
+		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), nickname), false, true);
+		if (client.getUserName().size() > 0)
+			server.send_data(client.getSocketFd(), WELCOME(client.getNickname()), true, false);
 	}
 	return true;
 }
@@ -122,15 +268,13 @@ bool Parsing::capability(Client &client, std::string &buffer)
 		std::vector<std::string> cap_req = Parsing::split(cap, ' ');
 		for (size_t i = 0; i < cap_req.size(); i++)
 		{
-			if (!(cap.find(cap_req[i]) != std::string::npos))
+			if (caps.find(cap_req[i]) == std::string::npos)
 			{
-				server.send_data(client.getSocketFd(), "CAP" + client.getNickname() + " NAK " + cap_req[i], true, false);
+				server.send_data(client.getSocketFd(), ERR_CAP_INVALID(client.getNickname(), buffer.substr(9, buffer.size() - 9)), true, false);
 				return true;
 			}
 		}
-		server.send_data(client.getSocketFd(), "CAP " + client.getNickname() + " ACK :" + cap, true, false);
+		server.send_data(client.getSocketFd(), CAP_VALID(client.getNickname(), cap), true, false);
 	}
-	else if (buffer.substr(0, 7) == "CAP END")
-		server.send_data(client.getSocketFd(), "001 " + std::string(WELCOME(client.getNickname())), true, false);
 	return true;
 }
