@@ -164,6 +164,29 @@ void Server::handleNewConnection()
  */
 void Server::DisconnectClient(Client &client)
 {
+	// parcourir les channels et supprimer le client
+	for (std::map<std::string, Channel>::iterator it = channels_.begin(); it != channels_.end(); ++it)
+	{
+		if (it->second.removeClient(client))
+			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, "Leaving"));
+	}
+	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
+	close(client.getSocketFd());
+	clients_.erase(client.getSocketFd());
+}
+
+/*
+ * Déconnexion d'un client
+ * @param client : le client à déconnecter
+ * @param message : le message à envoyer au client avant de le déconnecter
+ */
+void Server::DisconnectClient(Client &client, std::string message)
+{
+	for (std::map<std::string, Channel>::iterator it = channels_.begin(); it != channels_.end(); ++it)
+	{
+		if (it->second.removeClient(client))
+		it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, message));
+	}
 	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
 	close(client.getSocketFd());
 	clients_.erase(client.getSocketFd());

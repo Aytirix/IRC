@@ -9,7 +9,7 @@
 /* --------- INVITE --------- */
 
 /* --------- JOIN ----------- */
-#define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " :" + message
+#define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " " + message
 #define USER_NOT_IN_CHANNEL(nickname, channel) "442 " + nickname + " " + channel + " :You're not on that channel"
 #define USER_JOIN_CHANNEL(unique_nickname, channel) ":" + unique_nickname + " JOIN " + channel
 

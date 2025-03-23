@@ -273,3 +273,7 @@ Gtk-Message: 16:58:12.279: Failed to load module "canberra-gtk-module"
 ** (hexchat:2): WARNING **: 17:25:42.953: invalid source position for vertical gradient
 
 ** (hexchat:2): WARNING **: 17:25:42.953: invalid source position for vertical gradient
+Gtk-Message: 17:35:34.078: Failed to load module "atk-bridge"
+Gtk-Message: 17:35:34.087: Failed to load module "canberra-gtk-module"
+Gtk-Message: 17:35:43.449: Failed to load module "atk-bridge"
+Gtk-Message: 17:35:43.453: Failed to load module "canberra-gtk-module"

@@ -18,7 +18,7 @@ private:
 	Server &_server;
 	std::string &_name;
 	std::map<int, Client> _clients;
-	int _operator;
+	std::list<int> _operators;
 	int limit;
 	bool _mode_topic;
 
@@ -34,7 +34,8 @@ public:
 	void sendMessage(Client client, std::string message);
 	void broadcastMessage(std::string message);
 	void broadcastMessage(Client client, std::string message);
-	void changeOperator(Client &client);
+	void addOperator(Client &client);
+	void removeOperator(Client &client);
 	std::string getAllClientsString();
 
     // Getters

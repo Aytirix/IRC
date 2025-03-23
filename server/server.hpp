@@ -45,6 +45,7 @@ private:
 
 	bool setNonBlocking(int fd);
 	void handleNewConnection();
+	void DisconnectClient(Client &client, std::string message);
 	void DisconnectClient(Client &client);
 	void handleClientData(int client_fd);
 

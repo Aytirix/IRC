@@ -136,6 +136,7 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 		// On récupère le message s'il y en a un
 		size_t colon_pos = buffer.find(":");
 		std::string message = (colon_pos != std::string::npos) ? buffer.substr(colon_pos, buffer.size() - colon_pos) : "";
+		std::cout << "PART " << channel << " " << message << std::endl;
 		this->partChannel(client, channel, message);
 	}
 	else if (buffer.substr(0, 4) == "QUIT")
@@ -176,8 +177,8 @@ void Parsing::partChannel(Client &client, std::string &channelName, std::string 
 			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), channelName, message));
 			return;
 		}
-		server.send_data(client.getSocketFd(), USER_NOT_IN_CHANNEL(client.getNickname(), channelName));
 	}
+	server.send_data(client.getSocketFd(), USER_NOT_IN_CHANNEL(client.getNickname(), channelName));
 }
 
 void Parsing::joinChannel(Client &client, std::string &channelName)
