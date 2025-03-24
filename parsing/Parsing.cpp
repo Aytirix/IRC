@@ -38,7 +38,12 @@ void	Parsing::capabilities(Client &client, std::string &buffer)
 {
 	if (buffer == "CAP LS 302")
 	{
-		std::string str = "CAP * LS :multi-prefix";
+		std::string str = "CAP * LS : chghost";
+		server.send_data(client.getSocketFd(), str, true, false);
+	}
+	else if (buffer ==  )
+	{
+		std::string str = "CAP  : chghost";
 		server.send_data(client.getSocketFd(), str, true, false);
 	}
 }

@@ -27,6 +27,8 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 
+hexechat:
+	flatpak run io.github.Hexchat
 
 start: all
 	-fuser -k 6667/tcp
