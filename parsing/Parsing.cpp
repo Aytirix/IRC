@@ -11,9 +11,9 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 {
 	clean_buffer(buffer);
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
-	if (buffer.substr(0, 4) == "CAP ")
+	if (buffer.substr(0, 3) == "CAP")
 	{
-		
+		capabilities(client, buffer);
 	}
 	// if (buffer.find("CAP ls "))
 	//PASS
@@ -32,4 +32,13 @@ void	Parsing::clean_buffer(std::string &buffer)
 	pos = buffer.find("\n");
 	if (pos != std::string::npos)
 		buffer.erase(pos, 1);
+}
+
+void	Parsing::capabilities(Client &client, std::string &buffer)
+{
+	if (buffer == "CAP LS 302")
+	{
+		std::string str = "CAP * LS :multi-prefix";
+		server.send_data(client.getSocketFd(), str, true, false);
+	}
 }

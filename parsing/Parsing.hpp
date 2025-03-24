@@ -25,6 +25,7 @@ public:
 
 	void	clean_buffer(std::string &buffer);
 	bool	init_parsing(Client &client, std::string &buffer);
+	void	capabilities(Client &client, std::string &buffer);
 };
 
 #endif

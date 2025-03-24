@@ -234,8 +234,8 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 
 	log::write(log::SENT, " fd(" + log::toString(client_fd) + ") : '" + data + "'");
 
-	// if (data.size() == 0 || data[data.size() - 1] != '\n')
-	// 	data += '\n';
+	if (data.size() == 0 || data[data.size() - 1] != '\n')
+		data += '\n';
 
 	ssize_t bytes = write(client_fd, data.c_str(), data.size());
 	if (bytes < 0)
