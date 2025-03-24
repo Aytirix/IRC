@@ -28,7 +28,7 @@ private:
 	void Who(Client &client, std::string &buffer);
 	void joinChannel(Client &client, std::string &channelName);
 	void partChannel(Client &client, std::string &channelName, std::string &message);
-
+	void PRIVMSG(Client &client, std::string &buffer);
 
 public:
 	Parsing(Server &server);

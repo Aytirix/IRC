@@ -3,11 +3,14 @@ NAME = ircserv
 
 CFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 -fsanitize=address
 
+LDFLAGS = -lcurl
+
 SRCS = main.cpp \
 		server/server.cpp \
 		client/client.cpp \
 		channel/channel.cpp \
-		parsing/Parsing.cpp
+		parsing/Parsing.cpp \
+		chatbot/chatbot.cpp \
 
 OBJ_DIR = obj
 OBJS = $(addprefix $(OBJ_DIR)/,$(SRCS:.cpp=.o))
@@ -19,7 +22,7 @@ $(OBJ_DIR)/%.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+	$(CC) $(CFLAGS) $(OBJS) -o $(NAME) $(LDFLAGS)
 
 clean:
 	rm -rf $(OBJ_DIR)

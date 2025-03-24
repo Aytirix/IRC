@@ -133,16 +133,20 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 		if (!check_enough_params(client, buffer))
 			return true;
 		std::string channel = buffer.substr(5, buffer.find(" ", 5) - 5);
-		// On récupère le message s'il y en a un
 		size_t colon_pos = buffer.find(":");
 		std::string message = (colon_pos != std::string::npos) ? buffer.substr(colon_pos, buffer.size() - colon_pos) : "";
-		std::cout << "PART " << channel << " " << message << std::endl;
 		this->partChannel(client, channel, message);
 	}
 	else if (buffer.substr(0, 4) == "QUIT")
 	{
 		std::string message = buffer.substr(5, buffer.size() - 5);
 		server.DisconnectClient(client, message);
+	}
+	else if (buffer.substr(0, 7) == "PRIVMSG")
+	{
+		if (!check_enough_params(client, buffer))
+			return true;
+		this->PRIVMSG(client, buffer);
 	}
 	else
 		server.send_data(client.getSocketFd(), ERR_UNKNOWNCOMMAND(client.getNickname(), buffer.substr(0, buffer.find(" ", 0))));
@@ -152,14 +156,14 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 void Parsing::Who(Client &client, std::string &buffer)
 {
 	if (!check_enough_params(client, buffer))
-		return ;
+		return;
 	std::string channel = buffer.substr(4, buffer.find(" ", 4) - 4);
 	std::cout << "WHO " << channel << std::endl;
 	std::map<std::string, Channel>::iterator it = server.channels_.find(channel);
 	if (it == server.channels_.end())
 	{
 		server.send_data(client.getSocketFd(), "315 " + client.getNickname() + " " + channel + " :End of /WHO list");
-		return ;
+		return;
 	}
 	std::string list_users = it->second.getAllClientsString();
 	server.send_data(client.getSocketFd(), "353 " + client.getNickname() + " @ " + channel + " :" + list_users);
@@ -183,6 +187,11 @@ void Parsing::partChannel(Client &client, std::string &channelName, std::string 
 
 void Parsing::joinChannel(Client &client, std::string &channelName)
 {
+	if (channelName[0] != '#')
+	{
+		server.send_data(client.getSocketFd(), ERR_NOSUCHCHANNEL(client.getNickname(), channelName));
+		return;
+	}
 	std::map<std::string, Channel>::iterator it = server.channels_.find(channelName);
 	if (it == server.channels_.end())
 	{
@@ -228,19 +237,29 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 	else if (buffer.substr(0, 4) == "NICK")
 	{
 		std::string nickname = buffer.substr(5, buffer.size() - 5);
-		std::cout << "NICK " << nickname << std::endl;
+
+		if (client.getNickname() == nickname)
+			return true;
+
 		// Si le nickname est déjà utilisé
 		for (std::map<int, Client>::iterator it = server.clients_.begin(); it != server.clients_.end(); ++it)
 		{
-			if (it->second.getNickname() != "" && it->second.getNickname() == nickname)
+			if (it->second.getNickname() != "" && it->second.getNickname() == nickname && it->second.getSocketFd() != client.getSocketFd())
 			{
-				std::cout << "ERR_NICKNAME_IN_USE '" << it->second.getNickname() << "' | '" << nickname << "'" << std::endl;
 				std::string nick = client.getNickname() != "" ? client.getNickname() + " " : "";
-				std::cout << "ERR_NICKNAME_IN_USE '" << nick << "' | '" << nickname << "'" << std::endl;
 				server.send_data(client.getSocketFd(), ERR_NICKNAME_IN_USE(nick, nickname));
 				return true;
 			}
 		}
+
+		// Si il y a un # dans le nickname
+		if (nickname.find("#") != std::string::npos)
+		{
+			std::string old_nick = client.getNickname() != "" ? client.getNickname() : "";
+			server.send_data(client.getSocketFd(), ERR_ERRONEUS_NICKNAME(old_nick, nickname));
+			return true;
+		}
+
 		std::string tmp = client.getNickname();
 		client.setNickname(nickname);
 		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), nickname), false, true);
@@ -260,7 +279,7 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 */
 bool Parsing::capability(Client &client, std::string &buffer)
 {
-	std::string caps = "chghost extended-join multi-prefix account-tag cap-notify";
+	std::string caps = "chghost";
 	if (buffer.substr(0, 10) == "CAP LS 302")
 		server.send_data(client.getSocketFd(), "CAP * LS :" + caps, true, false);
 	else if (buffer.substr(0, 7) == "CAP REQ")
@@ -278,4 +297,36 @@ bool Parsing::capability(Client &client, std::string &buffer)
 		server.send_data(client.getSocketFd(), CAP_VALID(client.getNickname(), cap), true, false);
 	}
 	return true;
+}
+
+void Parsing::PRIVMSG(Client &client, std::string &buffer)
+{
+	std::string channel = buffer.substr(8, buffer.find(" ", 8) - 8);
+	std::string message = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
+	if (channel[0] == '#')
+	{
+		std::map<std::string, Channel>::iterator it = server.channels_.find(channel);
+		if (it == server.channels_.end())
+		{
+			server.send_data(client.getSocketFd(), ERR_NOSUCHCHANNEL(client.getNickname(), channel));
+			return;
+		}
+		it->second.broadcastMessage(":" + client.getUniqueName() + " PRIVMSG " + channel + " :" + message);
+		return;
+	}
+	else
+	{
+		std::string target = buffer.substr(8, buffer.find(" ", 8) - 8);
+		std::string message = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
+		std::cout << "PRIVMSG '" << target << "' | '" << message << "'" << std::endl;
+		std::map<int, Client>::iterator it = server.clients_.begin();
+		for (; it != server.clients_.end(); ++it)
+		{
+			if (it->second.getNickname() == target)
+			{
+				server.send_data(it->second.getSocketFd(), ":" + client.getUniqueName() + " PRIVMSG " + target + " :" + message, false, true);
+				return;
+			}
+		}
+	}
 }

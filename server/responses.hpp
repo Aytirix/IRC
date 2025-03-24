@@ -12,6 +12,7 @@
 #define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " " + message
 #define USER_NOT_IN_CHANNEL(nickname, channel) "442 " + nickname + " " + channel + " :You're not on that channel"
 #define USER_JOIN_CHANNEL(unique_nickname, channel) ":" + unique_nickname + " JOIN " + channel
+#define ERR_NOSUCHCHANNEL(nickname, channel) "403 " + nickname + " " + channel + " :No such channel"
 
 /* --------- KICK ----------- */
 
@@ -31,7 +32,7 @@
 /* ----------------------- NICK ----------------------- */
 #define ERR_NICKNAME_IN_USE(nickname, use_nickname) "433 " + nickname + use_nickname + " :Nickname is already in use"
 #define ERR_NICKNAME_MISSING "431 :No nickname given"
-#define ERR_ERRONEUS_NICKNAME(nickname) "432 " + nickname + " :Erroneus nickname"
+#define ERR_ERRONEUS_NICKNAME(old_nickname, new_nickname) "432 " + old_nickname + " " + new_nickname + " :Erroneus nickname"
 #define NICKNAME_CHANGED(unique_nickname, nickname) ":" + unique_nickname + " NICK :" + nickname
 
 /* ----------------------- TOPIC ----------------------- */
