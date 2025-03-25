@@ -322,6 +322,8 @@ void Parsing::PRIVMSG(Client &client, std::string &buffer)
 		std::string target = buffer.substr(8, buffer.find(" ", 8) - 8);
 		std::string message = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
 		std::map<int, Client>::iterator it = server.clients_.begin();
+
+		// Si c'est un message privé au chatbot
 		if (target == server.chatbot_->getNickname() && message[0] != '' && message.find("SHA-256 checksum for /") == std::string::npos)
 		{
 			std::string reponse = server.chatbot_->sendMessage(client, message);
