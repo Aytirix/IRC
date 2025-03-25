@@ -1,5 +1,4 @@
 #include "server.hpp"
-#include <arpa/inet.h>
 
 Server::Server(int port, const std::string &password)
 	: listen_fd_(-1), port_(port), password_(Hasher::hash(password))
@@ -7,10 +6,12 @@ Server::Server(int port, const std::string &password)
 	// initialiser la map des clients
 	clients_.clear();
 	channels_.clear();
+	chatbot_ = new Chatbot(*this);
 }
 
 Server::~Server()
 {
+	delete chatbot_;
 	for (std::map<int, Client>::iterator it = clients_.begin(); it != clients_.end(); ++it)
 		close(it->first);
 }
@@ -51,7 +52,7 @@ void Server::run()
  * Création du socket d'écoute, configuration de l'adresse du serveur
  * et mise en mode non bloquant du socket d'écoute
  * @return true si l'initialisation a réussi, false sinon
-*/
+ */
 bool Server::init()
 {
 	// Création du socket d'écoute
@@ -106,7 +107,7 @@ bool Server::init()
 	pollfd listen_pfd;
 	listen_pfd.fd = listen_fd_;
 	listen_pfd.events = POLLIN;
-	Client listenClient(listen_pfd);
+	Client listenClient(listen_pfd, "listen");
 	clients_.insert(std::make_pair(listen_fd_, listenClient));
 
 	log::log::write(log::log::INFO, "Le serveur a démarré sur le port " + log::toString(port_));
@@ -117,7 +118,7 @@ bool Server::init()
  * Mettre un descripteur de fichier en mode non bloquant
  * @param fd : le descripteur de fichier
  * @return true si l'opération a réussi, false sinon
-*/
+ */
 bool Server::setNonBlocking(int fd)
 {
 	int flags = fcntl(fd, F_GETFL, 0);
@@ -131,7 +132,7 @@ bool Server::setNonBlocking(int fd)
 /*
  * Nouvelle connexion d'un client
  * Accepte la connexion et ajoute le client à la map
-*/
+ */
 void Server::handleNewConnection()
 {
 	sockaddr_in client_addr;
@@ -149,12 +150,13 @@ void Server::handleNewConnection()
 		close(client_fd);
 		return;
 	}
+
 	pollfd client_pfd;
 	client_pfd.fd = client_fd;
 	client_pfd.events = POLLIN;
-	Client client(client_pfd);
-	client.setIp(inet_ntoa(client_addr.sin_addr));
+	Client client(client_pfd, inet_ntoa(client_addr.sin_addr));
 	clients_.insert(std::make_pair(client_fd, client));
+	chatbot_->addClient(client);
 	log::write(log::INFO, "Nouvelle connexion : fd(" + log::toString(client_fd) + ")");
 }
 
@@ -172,6 +174,7 @@ void Server::DisconnectClient(Client &client)
 	}
 	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
 	close(client.getSocketFd());
+	chatbot_->deleteClient(client);
 	clients_.erase(client.getSocketFd());
 }
 
@@ -185,7 +188,7 @@ void Server::DisconnectClient(Client &client, std::string message)
 	for (std::map<std::string, Channel>::iterator it = channels_.begin(); it != channels_.end(); ++it)
 	{
 		if (it->second.removeClient(client))
-		it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, message));
+			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, message));
 	}
 	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
 	close(client.getSocketFd());

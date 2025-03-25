@@ -18,7 +18,7 @@ private:
 	std::string buffer;
 public:
 	Client();
-    Client(pollfd socket_fd);
+    Client(pollfd socket_fd, std::string ip);
     ~Client();
 
     // Getters

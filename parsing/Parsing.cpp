@@ -252,8 +252,7 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 			}
 		}
 
-		// Si il y a un # dans le nickname
-		if (nickname.find("#") != std::string::npos)
+		if (nickname.find("#") != std::string::npos || nickname == "chatbot")
 		{
 			std::string old_nick = client.getNickname() != "" ? client.getNickname() : "";
 			server.send_data(client.getSocketFd(), ERR_ERRONEUS_NICKNAME(old_nick, nickname));
@@ -261,10 +260,14 @@ bool Parsing::InitializeUser(Client &client, std::string &buffer)
 		}
 
 		std::string tmp = client.getNickname();
-		client.setNickname(nickname);
 		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), nickname), false, true);
-		if (client.getUserName().size() > 0)
+		client.setNickname(nickname);
+		if (tmp.size() == 0)
+		{
+			std::string str = "PRIVMSG " + client.getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
+			PRIVMSG(*server.chatbot_, str);
 			server.send_data(client.getSocketFd(), WELCOME(client.getNickname()), true, false);
+		}
 	}
 	return true;
 }
@@ -318,14 +321,21 @@ void Parsing::PRIVMSG(Client &client, std::string &buffer)
 	{
 		std::string target = buffer.substr(8, buffer.find(" ", 8) - 8);
 		std::string message = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
-		std::cout << "PRIVMSG '" << target << "' | '" << message << "'" << std::endl;
 		std::map<int, Client>::iterator it = server.clients_.begin();
-		for (; it != server.clients_.end(); ++it)
+		if (target == server.chatbot_->getNickname() && message[0] != '' && message.find("SHA-256 checksum for /") == std::string::npos)
 		{
-			if (it->second.getNickname() == target)
+			std::string reponse = server.chatbot_->sendMessage(client, message);
+			server.send_data(client.getSocketFd(), ":" + server.chatbot_->getUniqueName() + " PRIVMSG " + client.getNickname() + " :" + reponse, false, true);
+		}
+		else
+		{
+			for (; it != server.clients_.end(); ++it)
 			{
-				server.send_data(it->second.getSocketFd(), ":" + client.getUniqueName() + " PRIVMSG " + target + " :" + message, false, true);
-				return;
+				if (it->second.getNickname() == target)
+				{
+					server.send_data(it->second.getSocketFd(), ":" + client.getUniqueName() + " PRIVMSG " + target + " :" + message, false, true);
+					return;
+				}
 			}
 		}
 	}

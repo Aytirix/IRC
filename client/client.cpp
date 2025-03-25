@@ -2,10 +2,7 @@
 
 Client::Client() {}
 
-Client::Client(pollfd pfd)
-{
-	this->pfd = pfd;
-}
+Client::Client(pollfd pfd, std::string ip) : pfd(pfd), _ip(ip) {}
 
 Client::~Client() {}
 

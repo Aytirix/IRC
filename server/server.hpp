@@ -1,5 +1,6 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -13,14 +14,19 @@
 #include <cstring>
 #include <errno.h>
 #include <stdio.h>
+#include <arpa/inet.h>
+
 #include "../parsing/Parsing.hpp"
 #include "../client/client.hpp"
 #include "../log/log.hpp"
 #include "../channel/channel.hpp"
+#include "../chatbot/chatbot.hpp"
 #include "hasher.hpp"
+
 
 class Parsing;
 class Channel;
+class Chatbot;
 
 class Server
 {
@@ -42,6 +48,7 @@ private:
 	unsigned long password_;
 	std::map<int, Client> clients_;
 	std::map<std::string, Channel> channels_;
+	Chatbot *chatbot_;
 
 	bool setNonBlocking(int fd);
 	void handleNewConnection();
@@ -51,6 +58,7 @@ private:
 
 	// Permet a parsing d'acceder au attribut privé de server
 	friend class Parsing;
+	friend class Chatbot;
 };
 
 #endif
