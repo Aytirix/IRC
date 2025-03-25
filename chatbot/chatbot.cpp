@@ -158,7 +158,7 @@ std::string Chatbot::buildJsonPayload(std::vector<Message> &conversation)
 	https://huggingface.co/models?pipeline_tag=text-generation&language=fr&sort=downloads
 	- Meta-Llama-3.1-8B-Instruct
 	*/
-	payload += "], \"max_tokens\": 500, \"model\": \"Meta-Llama-3.1-8B-Instruct\", \"stream\": false }";
+	payload += "], \"max_tokens\": 100, \"model\": \"Meta-Llama-3.1-8B-Instruct\", \"stream\": false }";
 	return payload;
 }
 
