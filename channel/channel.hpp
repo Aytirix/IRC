@@ -30,7 +30,6 @@ public:
 	// Methods
 	void addClient(Client client);
 	bool removeClient(Client client);
-	void sendMessage(Client client, std::string message);
 	void broadcastMessage(std::string message);
 	void broadcastMessage(Client client, std::string message);
 	void addOperator(Client &client);

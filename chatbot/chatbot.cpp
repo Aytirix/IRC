@@ -1,5 +1,18 @@
 #include "chatbot.hpp"
 
+/**
+ * @brief Constructeur de la classe Chatbot.
+ *
+ * Ce constructeur initialise un objet Chatbot avec une référence à un objet Server.
+ * Il initialise également la bibliothèque libcurl pour les requêtes HTTP et configure
+ * les informations de connexion du chatbot.
+ *
+ * @param server Référence à un objet Server utilisé par le chatbot.
+ *
+ * @note Le constructeur initialise libcurl et configure les paramètres de connexion
+ *       du chatbot, y compris le token API et l'URL pour les requêtes HTTP.
+ *       En cas d'échec de l'initialisation de libcurl, le programme se termine avec un message d'erreur.
+ **/
 Chatbot::Chatbot(Server &server) : Client(), server(server)
 {
 	apiToken = "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";
@@ -36,7 +49,14 @@ std::vector<Message> &Chatbot::operator[](Client &client)
 	return _clients[socketFd];
 }
 
-// Destructeur pour nettoyer libcurl
+/**
+ * @brief Destructeur de la classe Chatbot.
+ *
+ * Ce destructeur nettoie les ressources allouées par la classe Chatbot.
+ * Si l'objet curl a été initialisé, il est nettoyé à l'aide de curl_easy_cleanup.
+ * Ensuite, curl_global_cleanup est appelé pour nettoyer les ressources globales de libcurl.
+ * Enfin, toutes les listes de messages associées aux clients sont vidées.
+ */
 Chatbot::~Chatbot()
 {
 	if (curl)
@@ -48,7 +68,17 @@ Chatbot::~Chatbot()
 		it->second.clear();
 }
 
-// Envoie un message utilisateur et retourne la réponse de l'assistant
+/**
+ * @brief Envoie un message de l'utilisateur au serveur et retourne la réponse de l'assistant.
+ *
+ * Cette fonction ajoute le message utilisateur à la conversation, construit le JSON de la requête,
+ * prépare les en-têtes HTTP, définit l'URL et les options cURL, exécute la requête et traite la réponse.
+ * La réponse de l'assistant est ensuite ajoutée à la conversation et retournée.
+ *
+ * @param client Référence à l'objet Client représentant l'utilisateur.
+ * @param userInput Chaîne de caractères contenant le message de l'utilisateur.
+ * @return std::string La réponse de l'assistant.
+ **/
 std::string Chatbot::sendMessage(Client &client, const std::string &userInput)
 {
 	// Ajouter le message utilisateur à la conversation
@@ -97,6 +127,16 @@ std::string Chatbot::sendMessage(Client &client, const std::string &userInput)
 	return assistantResponse;
 }
 
+/**
+ * @brief Échappe les caractères spéciaux dans une chaîne pour qu'elle soit compatible avec le format JSON.
+ *
+ * Cette fonction prend une chaîne en entrée et remplace les caractères spéciaux par leurs séquences d'échappement
+ * correspondantes, telles que définies par le standard JSON. Les caractères échappés incluent les guillemets doubles,
+ * les barres obliques inverses, les caractères de contrôle comme le retour chariot, la tabulation, etc.
+ *
+ * @param s La chaîne d'entrée à échapper.
+ * @return Une nouvelle chaîne avec les caractères spéciaux échappés.
+ **/
 std::string Chatbot::escapeJson(const std::string &s)
 {
 	std::string escaped;
@@ -140,7 +180,20 @@ std::string Chatbot::escapeJson(const std::string &s)
 	return escaped;
 }
 
-// Construit le payload JSON à partir de l'historique
+/**
+ * @brief Construit le JSON à partir d'une conversation.
+ *
+ * Cette fonction prend une référence à un vecteur de messages et construit
+ * une chaîne JSON représentant la conversation. Chaque message est ajouté
+ * au format JSON avec son rôle et son contenu échappés.
+ *
+ * @param conversation Référence à un vecteur de messages représentant la conversation.
+ * @return Une chaîne JSON représentant la charge utile de la conversation.
+ *
+ * @note La charge utile JSON inclut également des paramètres supplémentaires
+ *       tels que "max_tokens" et "model".
+ *
+ **/
 std::string Chatbot::buildJsonPayload(std::vector<Message> &conversation)
 {
 	std::string payload = "{ \"messages\": [";
@@ -162,7 +215,19 @@ std::string Chatbot::buildJsonPayload(std::vector<Message> &conversation)
 	return payload;
 }
 
-// Fonction de rappel pour écrire la réponse dans une chaîne
+/**
+ * @brief Fonction de rappel pour écrire des données dans une chaîne de caractères.
+ *
+ * Cette fonction est utilisée comme fonction de rappel pour les opérations d'écriture,
+ * par exemple lors de l'utilisation de libcurl pour effectuer des requêtes HTTP.
+ * Elle ajoute les données reçues à la chaîne de caractères fournie.
+ *
+ * @param contents Pointeur vers les données reçues.
+ * @param size Taille d'un élément de données.
+ * @param nmemb Nombre d'éléments de données.
+ * @param output Pointeur vers la chaîne de caractères où les données doivent être ajoutées.
+ * @return size_t La taille totale des données traitées (size * nmemb).
+ */
 size_t Chatbot::WriteCallback(void *contents, size_t size, size_t nmemb, std::string *output)
 {
 	size_t totalSize = size * nmemb;
@@ -170,7 +235,17 @@ size_t Chatbot::WriteCallback(void *contents, size_t size, size_t nmemb, std::st
 	return totalSize;
 }
 
-// Extrait le contenu de la réponse de l'assistant
+/**
+ * @brief Extrait la réponse de l'assistant à partir des données de réponse JSON.
+ *
+ * Cette fonction recherche et extrait le contenu de la réponse de l'assistant
+ * dans une chaîne JSON donnée. Si le contenu n'est pas trouvé, elle tente de
+ * trouver un message d'erreur. Si aucun contenu ni message d'erreur n'est trouvé,
+ * elle retourne un message d'erreur générique.
+ *
+ * @param responseData La chaîne JSON contenant la réponse de l'assistant.
+ * @return La réponse de l'assistant ou un message d'erreur si le contenu n'est pas trouvé.
+ */
 std::string Chatbot::extractAssistantResponse(const std::string &responseData)
 {
 	size_t pos = responseData.find("\"content\":\"");
@@ -192,14 +267,34 @@ std::string Chatbot::extractAssistantResponse(const std::string &responseData)
 	return responseData.substr(pos, endPos - pos);
 }
 
+/**
+ * @brief Réduit la taille de la conversation en supprimant les anciens messages.
+ *
+ * Cette fonction limite le nombre de messages dans la conversation à un maximum de 51.
+ * Si la conversation dépasse cette limite, les messages les plus anciens sont supprimés,
+ * en conservant le premier message et les 50 derniers messages.
+ *
+ * @param conversation Référence à un vecteur de messages représentant la conversation.
+ */
 void Chatbot::trimConversation(std::vector<Message> &conversation)
 {
 	const size_t maxMessages = 1 + 50;
 
 	if (conversation.size() > maxMessages)
-		conversation.erase(conversation.begin() + 1, conversation.begin() + (conversation.size() - 20));
+		conversation.erase(conversation.begin() + 1, conversation.begin() + (conversation.size() - 50));
 }
 
+/**
+ * @brief Ajoute un client à la liste des clients du chatbot.
+ *
+ * Cette fonction ajoute un client à la liste des clients gérés par le chatbot.
+ * Si le client n'est pas déjà présent dans la liste, il est ajouté avec un message
+ * système initial qui définit le comportement du chatbot en tant qu'être humain
+ * sensible et bienveillant parlant uniquement français.
+ *
+ * @param client Référence vers l'objet Client à ajouter.
+ * @return true si le client a été ajouté avec succès, false si le client est déjà présent.
+ */
 bool Chatbot::addClient(Client &client)
 {
 	int key = client.getSocketFd();
@@ -215,6 +310,16 @@ bool Chatbot::addClient(Client &client)
 	return false;
 }
 
+/**
+ * @brief Supprime un client de la liste des clients du chatbot.
+ *
+ * Cette fonction supprime un client de la liste des clients gérés par le chatbot.
+ * Si le client est trouvé dans la liste, il est supprimé et la fonction retourne true.
+ * Sinon, elle retourne false.
+ *
+ * @param client Référence vers l'objet Client à supprimer.
+ * @return true si le client a été supprimé avec succès, false si le client n'est pas trouvé.
+ */
 bool Chatbot::deleteClient(Client &client)
 {
 	int clientId = client.getSocketFd();

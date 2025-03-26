@@ -16,6 +16,9 @@ Server::~Server()
 		close(it->first);
 }
 
+/**
+ * @brief Démarre le serveur et attend les connexions des clients
+ **/
 void Server::run()
 {
 	while (true)
@@ -38,6 +41,8 @@ void Server::run()
 			if (pollfds[i].revents & POLLIN)
 			{
 				int fd = pollfds[i].fd;
+				// Si le descripteur est celui du socket d'écoute, c'est une nouvelle connexion
+				// Sinon, c'est un client qui envoie des données
 				if (fd == listen_fd_)
 					handleNewConnection();
 				else
@@ -47,12 +52,12 @@ void Server::run()
 	}
 }
 
-/*
- * Initialisation du serveur
+/**
+ * @brief Initialisation du serveur
  * Création du socket d'écoute, configuration de l'adresse du serveur
  * et mise en mode non bloquant du socket d'écoute
  * @return true si l'initialisation a réussi, false sinon
- */
+ **/
 bool Server::init()
 {
 	// Création du socket d'écoute
@@ -114,11 +119,11 @@ bool Server::init()
 	return true;
 }
 
-/*
- * Mettre un descripteur de fichier en mode non bloquant
+/**
+ * @brief Mettre un descripteur de fichier en mode non bloquant
  * @param fd : le descripteur de fichier
  * @return true si l'opération a réussi, false sinon
- */
+ **/
 bool Server::setNonBlocking(int fd)
 {
 	int flags = fcntl(fd, F_GETFL, 0);
@@ -129,10 +134,10 @@ bool Server::setNonBlocking(int fd)
 	return true;
 }
 
-/*
- * Nouvelle connexion d'un client
+/**
+ * @brief Nouvelle connexion d'un client
  * Accepte la connexion et ajoute le client à la map
- */
+ **/
 void Server::handleNewConnection()
 {
 	sockaddr_in client_addr;
@@ -160,10 +165,10 @@ void Server::handleNewConnection()
 	log::write(log::INFO, "Nouvelle connexion : fd(" + log::toString(client_fd) + ")");
 }
 
-/*
- * Déconnexion d'un client
+/**
+ * @brief Déconnexion d'un client
  * @param client : le client à déconnecter
- */
+ **/
 void Server::DisconnectClient(Client &client)
 {
 	// parcourir les channels et supprimer le client
@@ -178,11 +183,11 @@ void Server::DisconnectClient(Client &client)
 	clients_.erase(client.getSocketFd());
 }
 
-/*
- * Déconnexion d'un client
+/**
+ * @brief Déconnexion d'un client
  * @param client : le client à déconnecter
  * @param message : le message à envoyer au client avant de le déconnecter
- */
+ **/
 void Server::DisconnectClient(Client &client, std::string message)
 {
 	for (std::map<std::string, Channel>::iterator it = channels_.begin(); it != channels_.end(); ++it)
@@ -195,13 +200,13 @@ void Server::DisconnectClient(Client &client, std::string message)
 	clients_.erase(client.getSocketFd());
 }
 
-/*
- * Traitement des données reçues d'un client
+/**
+ * @brief Traitement des données reçues d'un client
  * Les données reçues sont ajoutées au buffer du client
- * Si une commande complète est présente dans le buffer (délimitée par '\n'),
+ * Tant qu'il y a une commande complète est présente dans le buffer (délimitée par '\n'),
  * elle est traitée par la classe Parsing
  * @param client_fd : le descripteur du client
- */
+ **/
 void Server::handleClientData(int client_fd)
 {
 	// Lire les données reçues
@@ -244,13 +249,13 @@ void Server::handleClientData(int client_fd)
 	}
 }
 
-/*
- * Envoi de données à un client
+/**
+ * @brief Envoi de données à un client
  * @param client_fd : le descripteur du client
  * @param data : les données à envoyer
  * @param server_name : true si le nom du serveur doit être ajouté devant les données
  * @param date : true si la date doit être ajoutée devant les données
- */
+ **/
 void Server::send_data(int client_fd, std::string data, bool server_name, bool date)
 {
 	if (server_name)
