@@ -12,6 +12,13 @@
 class Client;
 class Server;
 
+struct Client_channel
+{
+	Client _client;
+	bool is_connected; // pour le ban
+	bool _is_operator;
+};
+
 class Channel
 {
 private:
@@ -19,8 +26,9 @@ private:
 	std::string &_name;
 	std::map<int, Client> _clients;
 	std::list<int> _operators;
-	int limit;
-	bool _mode_topic;
+	int limit; // A implementer -l
+	bool _mode_topic; // A implementer -t
+	std::string password; // A implenter -k
 
 public:
 
