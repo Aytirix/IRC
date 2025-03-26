@@ -16,6 +16,7 @@ private:
 	std::string _ip;
 	std::string _realname;
 	std::string buffer;
+	std::string buffer_send;
 	bool password_verified;
 public:
 	Client();
@@ -28,6 +29,7 @@ public:
 	std::string getUniqueName() const { return this->_nickName + "!" + this->_username + "@" + this->_ip;}
 	std::string getUserName() const { return this->_username; }
     pollfd getSocketPfd() const { return this->pfd; }
+    std::string &getSendBuffer() { return this->buffer_send; }
     std::string getNickname() const { return this->_nickName; }
 	std::string getRealName() const { return this->_realname; }
 	std::string getIp() const { return this->_ip; }

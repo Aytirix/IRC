@@ -20,11 +20,11 @@
 
 
 /* ----------------------- CHANNEL ----------------------- */
-#define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " " + message
+#define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " :" + message
 #define USER_NOT_IN_CHANNEL(nickname, channel) "442 " + nickname + " " + channel + " :You're not on that channel"
 #define USER_JOIN_CHANNEL(unique_nickname, channel) ":" + unique_nickname + " JOIN " + channel
 #define ERR_NOSUCHCHANNEL(nickname, channel) "403 " + nickname + " " + channel + " :No such channel"
-
+#define TEXT_NOT_FOUND(nickname) "412 " + nickname + " :No text to send"
 
 /* --------- WHO --------- */
 #define END_OF_WHO(nickname, channel) "315 " + nickname + " " + channel + " :End of /WHO list"

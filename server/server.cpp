@@ -126,10 +126,7 @@ bool Server::init()
  **/
 bool Server::setNonBlocking(int fd)
 {
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1)
-		return false;
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		return false;
 	return true;
 }
@@ -155,7 +152,6 @@ void Server::handleNewConnection()
 		close(client_fd);
 		return;
 	}
-
 	pollfd client_pfd;
 	client_pfd.fd = client_fd;
 	client_pfd.events = POLLIN;
@@ -190,6 +186,8 @@ void Server::DisconnectClient(Client &client)
  **/
 void Server::DisconnectClient(Client &client, std::string message)
 {
+	if (message[0] == ':')
+		message.erase(0, 1);
 	for (std::map<std::string, Channel>::iterator it = channels_.begin(); it != channels_.end(); ++it)
 	{
 		if (it->second.removeClient(client))
@@ -271,9 +269,22 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 	if (data.size() == 0 || data[data.size() - 1] != '\n')
 		data += '\n';
 
-	ssize_t bytes = write(client_fd, data.c_str(), data.size());
+	Client &client = clients_[client_fd];
+	client.getSendBuffer() += data;
+
+	std::string &sendBuffer = client.getSendBuffer();
+	ssize_t bytes = write(client_fd, sendBuffer.c_str(), sendBuffer.size());
+
 	if (bytes < 0)
-		perror("write");
-	else if (bytes < (ssize_t)data.size())
-		std::cerr << "Erreur : données partiellement envoyées" << std::endl;
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return;
+		else
+		{
+			perror("write");
+			DisconnectClient(client);
+		}
+	}
+	else
+		sendBuffer.erase(0, bytes);
 }

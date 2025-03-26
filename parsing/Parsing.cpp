@@ -40,6 +40,13 @@ std::string Parsing::RemoveHiddenChar(std::string &str)
 		str.erase(str.find("\r"), 1);
 	if (str.find("\n") != std::string::npos)
 		str.erase(str.find("\n"), 1);
+
+	// Supprime les espaces en trop entre la commande et le premier argument
+	size_t space_pos = str.find(" ");
+	if (space_pos == std::string::npos)
+		return str;
+	while (space_pos + 1 < str.size() && str[space_pos + 1] == ' ')
+		str.erase(space_pos + 1, 1);
 	return str;
 }
 
@@ -52,6 +59,20 @@ std::string Parsing::RemoveHiddenChar(std::string &str)
  **/
 bool Parsing::check_enough_params(Client &client, std::string &buffer)
 {
+	std::string command = "JOIN PART WHO PRIVMSG NICK";
+	std::vector<std::string> params = split(command, ' ');
+	bool found = false;
+	for (size_t i = 0; i < params.size(); i++)
+	{
+		if (buffer.substr(0, params[i].size()) == params[i])
+		{
+			found = true;
+			break;
+		}
+	}
+	if (found == false)
+		return true;
+
 	size_t space_pos = buffer.find(" ");
 
 	if (space_pos == std::string::npos)
@@ -59,10 +80,6 @@ bool Parsing::check_enough_params(Client &client, std::string &buffer)
 		server.send_data(client.getSocketFd(), NOT_ENOUGH_PARAMS(client.getNickname(), buffer));
 		return false;
 	}
-
-	// Laisser juste une espace entre le premier paramètre et le premier argument
-	while (space_pos + 1 < buffer.size() && buffer[space_pos + 1] == ' ')
-		buffer.erase(space_pos + 1, 1);
 
 	if (space_pos + 1 == buffer.size())
 	{
@@ -105,51 +122,40 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	buffer = RemoveHiddenChar(buffer);
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 
-	if (!IsRegistered(client, buffer))
+	if (!check_enough_params(client, buffer))
 		return true;
 
-	if (buffer.substr(0, 3) == "CAP")
-		return capability(client, buffer);
-	else if (std::string("PASS NICK USER").find(buffer.substr(0, 4)) != std::string::npos)
-		return InitializeUser(client, buffer);
-	else if (buffer.substr(0, 4) == "MODE")
+	std::string command = buffer.substr(0, buffer.find(" "));
+	std::string args = "";
+	if (buffer.find(" ") != std::string::npos)
+		args = buffer.substr(buffer.find(" ") + 1, buffer.size() - 1);
+
+	// Commande a executer quand l'utilisateur est connecté ou pas
+	if (command == "CAP")
+		capability(client, args);
+	else if (command == "USER")
+		CMD_USER(client, args);
+	else if (command == "PASS")
+		return CMD_PASS(client, args);
+	else if (command == "NICK")
+		CMD_NICK(client, args);
+	else if (command == "QUIT")
+		server.DisconnectClient(client, args);
+	else if (IsRegistered(client, buffer))
 	{
-		if (!check_enough_params(client, buffer))
-			return true;
-		std::string channel = buffer.substr(5, buffer.size() - 5);
-		server.send_data(client.getSocketFd(), ALL_MODES(channel));
+		if (command == "MODE")
+			server.send_data(client.getSocketFd(), ALL_MODES(command));
+		else if (command == "JOIN")
+			this->joinChannel(client, args);
+		else if (buffer.substr(0, 3) == "WHO")
+			this->Who(client, args);
+		else if (command == "PART")
+			this->partChannel(client, args);
+		else if (command == "PRIVMSG")
+			this->PRIVMSG(client, args);
+		else
+			server.send_data(client.getSocketFd(), ERR_UNKNOWNCOMMAND(client.getNickname(), buffer.substr(0, buffer.find(" "))));
 	}
-	else if (buffer.substr(0, 4) == "JOIN")
-	{
-		if (!check_enough_params(client, buffer))
-			return true;
-		std::string channel = buffer.substr(5, buffer.size() - 5);
-		this->joinChannel(client, channel);
-	}
-	else if (buffer.substr(0, 3) == "WHO")
-		this->Who(client, buffer);
-	else if (buffer.substr(0, 4) == "PART")
-	{
-		if (!check_enough_params(client, buffer))
-			return true;
-		std::string channel = buffer.substr(5, buffer.find(" ", 5) - 5);
-		size_t colon_pos = buffer.find(":");
-		std::string message = (colon_pos != std::string::npos) ? buffer.substr(colon_pos, buffer.size() - colon_pos) : "";
-		this->partChannel(client, channel, message);
-	}
-	else if (buffer.substr(0, 4) == "QUIT")
-	{
-		std::string message = buffer.substr(5, buffer.size() - 5);
-		server.DisconnectClient(client, message);
-	}
-	else if (buffer.substr(0, 7) == "PRIVMSG")
-	{
-		if (!check_enough_params(client, buffer))
-			return true;
-		this->PRIVMSG(client, buffer);
-	}
-	else
-		server.send_data(client.getSocketFd(), ERR_UNKNOWNCOMMAND(client.getNickname(), buffer.substr(0, buffer.find(" ", 0))));
 	return true;
 }
 
@@ -159,11 +165,8 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
  * @param client : le client qui a envoyé la commande
  * @param buffer : la commande à parser
  **/
-void Parsing::Who(Client &client, std::string &buffer)
+void Parsing::Who(Client &client, std::string &channel)
 {
-	if (!check_enough_params(client, buffer))
-		return;
-	std::string channel = buffer.substr(4, buffer.find(" ", 4) - 4);
 	std::map<std::string, Channel>::iterator it = server.channels_.find(channel);
 	if (it == server.channels_.end())
 	{
@@ -184,8 +187,18 @@ void Parsing::Who(Client &client, std::string &buffer)
  * @param channelName : le nom du channel
  * @param message : le message à envoyer
  **/
-void Parsing::partChannel(Client &client, std::string &channelName, std::string &message)
+void Parsing::partChannel(Client &client, std::string &args)
 {
+	std::string channelName = args.substr(0, args.find(" "));
+	size_t colon_pos = args.find(":");
+	std::string message = (colon_pos != std::string::npos) ? args.substr(colon_pos + 1, args.size() - colon_pos) : "";
+
+	if (channelName[0] != '#')
+	{
+		server.send_data(client.getSocketFd(), ERR_NOSUCHCHANNEL(client.getNickname(), channelName));
+		return;
+	}
+
 	for (std::map<std::string, Channel>::iterator it = server.channels_.begin(); it != server.channels_.end(); ++it)
 	{
 		if (it->first == channelName)
@@ -224,115 +237,33 @@ void Parsing::joinChannel(Client &client, std::string &channelName)
 }
 
 /**
- * @brief InitializeUser
- * Gère l'initialisation de l'utilisateur
- * Si le client envoie un PASS, on vérifie le mot de passe
- * Si le client envoie un USER, on initialise le nom d'utilisateur et le nom réel
- * Si le client envoie un NICK, on initialise le pseudo
- * @param client : le client qui a envoyé la commande
- * @param buffer : la commande à parser
- * @return true si l'initialisation s'est bien passée, false sinon (false deconnecte le client)
-**/
-bool Parsing::InitializeUser(Client &client, std::string &buffer)
-{
-	if (buffer.substr(0, 4) == "PASS")
-	{
-		if (client.IsConnected() > 0)
-		{
-			server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
-			return true;
-		}
-		std::string password = buffer.substr(5, buffer.size() - 5);
-		if (!Hasher::compare(password, server.password_))
-		{
-			log::write(log::INFO, "L'utilisateur : fd(" + log::toString(client.getSocketFd()) + ") a rentré un mauvais mot de passe");
-			server.send_data(client.getSocketFd(), ERR_PASSWD_MISMATCH);
-			server.DisconnectClient(client);
-			return false;
-		}
-		client.passwordVerified();
-	}
-	else if (buffer.substr(0, 4) == "USER")
-	{
-		if (client.IsConnected() > 0)
-		{
-			server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
-			return true;
-		}
-		std::string username = buffer.substr(5, buffer.size() - 5);
-		username = username.substr(0, username.find(" "));
-		client.setUserName(username);
-		username = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
-		client.setRealName(username);
-	}
-	else if (buffer.substr(0, 4) == "NICK")
-	{
-		std::string nickname = buffer.substr(5, buffer.size() - 5);
-
-		if (client.getNickname() == nickname)
-			return true;
-
-		// Si le nickname est déjà utilisé
-		for (std::map<int, Client>::iterator it = server.clients_.begin(); it != server.clients_.end(); ++it)
-		{
-			if (it->second.getNickname() != "" && it->second.getNickname() == nickname && it->second.getSocketFd() != client.getSocketFd())
-			{
-				std::string nick = client.getNickname() != "" ? client.getNickname() + " " : "";
-				server.send_data(client.getSocketFd(), ERR_NICKNAME_IN_USE(nick, nickname));
-				return true;
-			}
-		}
-
-		// Si le nickname est vide ou qu'il veut prendre le nom du chatbot
-		if (nickname.find("#") != std::string::npos || nickname == "chatbot")
-		{
-			std::string old_nick = client.getNickname() != "" ? client.getNickname() : "";
-			server.send_data(client.getSocketFd(), ERR_ERRONEUS_NICKNAME(old_nick, nickname));
-			return true;
-		}
-
-		std::string tmp = client.getNickname();
-		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), nickname), false, true);
-		client.setNickname(nickname);
-		// Si le client n'a pas encore de pseudo, on lui envoie un message de bienvenue
-		if (tmp.size() == 0)
-		{
-			std::string str = "PRIVMSG " + client.getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
-			PRIVMSG(*server.chatbot_, str);
-			server.send_data(client.getSocketFd(), WELCOME(client.getNickname()), true, false);
-		}
-	}
-	return true;
-}
-
-/**
  * @brief capability
  * Gère les commandes CAP
  * Si une commande CAP LS 302 est reçue, on envoie la liste des capabilities
  * Si une commande CAP REQ est reçue, on vérifie que les capabilities demandées sont bien supportées
  * @param client : le client qui a envoyé la commande
- * @param buffer : la commande à parser
-**/
-bool Parsing::capability(Client &client, std::string &buffer)
+ * @param args : la commande à parser
+ **/
+void Parsing::capability(Client &client, std::string &args)
 {
 	std::string caps = "chghost";
-	if (buffer.substr(0, 10) == "CAP LS 302")
+	if (args == "LS 302")
 		server.send_data(client.getSocketFd(), CAP_LIST(caps), true, false);
-	else if (buffer.substr(0, 7) == "CAP REQ")
+	else if (args == "REQ")
 	{
-		std::string cap = buffer.substr(9, buffer.size() - 9);
+		std::string cap = args.substr(5, args.size() - 5);
 		std::vector<std::string> cap_req = Parsing::split(cap, ' ');
 		for (size_t i = 0; i < cap_req.size(); i++)
 		{
 			if (caps.find(cap_req[i]) == std::string::npos)
 			{
-				server.send_data(client.getSocketFd(), ERR_CAP_INVALID(client.getNickname(), buffer.substr(9, buffer.size() - 9)), true, false);
-				return true;
+				server.send_data(client.getSocketFd(), ERR_CAP_INVALID(client.getNickname(), args.substr(5, args.size() - 5)), true, false);
+				return;
 			}
 		}
 		server.send_data(client.getSocketFd(), CAP_VALID(client.getNickname(), cap), true, false);
 	}
-	return true;
+	return;
 }
 
 /**
@@ -343,29 +274,35 @@ bool Parsing::capability(Client &client, std::string &buffer)
  * Si le message est pour un client, on l'envoie au client
  * @param client : le client qui a envoyé le message
  * @param buffer : le message à parser
-**/
-void Parsing::PRIVMSG(Client &client, std::string &buffer)
+ **/
+void Parsing::PRIVMSG(Client &client, std::string &args)
 {
-	std::string channel = buffer.substr(8, buffer.find(" ", 8) - 8);
-	std::string message = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
+// Si pour le message on ne trouve pas de : et qu'il y a pas au moins un caractere après le :
+	if (args.find(" :") == std::string::npos || args.find(":") == args.size() - 1)
+	{
+		server.send_data(client.getSocketFd(), TEXT_NOT_FOUND(client.getNickname()));
+		return;
+	}
+
+	std::string target = args.substr(0, args.find(" "));
+	size_t colon_pos = args.find(":");
+	std::string message = (colon_pos != std::string::npos) ? args.substr(colon_pos + 1, args.size() - colon_pos) : "";
 
 	// Si le messsage est pour un CHANNEL
-	if (channel[0] == '#')
+	if (target[0] == '#')
 	{
-		std::map<std::string, Channel>::iterator it = server.channels_.find(channel);
+		std::map<std::string, Channel>::iterator it = server.channels_.find(target);
 		if (it == server.channels_.end())
 		{
-			server.send_data(client.getSocketFd(), ERR_NOSUCHCHANNEL(client.getNickname(), channel));
+			server.send_data(client.getSocketFd(), ERR_NOSUCHCHANNEL(client.getNickname(), target));
 			return;
 		}
-		it->second.broadcastMessage(client, PRIV_MSG(client.getUniqueName(), channel, message));
+		it->second.broadcastMessage(client, PRIV_MSG(client.getUniqueName(), target, message));
 		return;
 	}
 	// Sinon, c'est un message privé
 	else
 	{
-		std::string target = buffer.substr(8, buffer.find(" ", 8) - 8);
-		std::string message = buffer.substr(buffer.find(":", 0) + 1, buffer.size() - buffer.find(":", 0) - 1);
 		std::map<int, Client>::iterator it = server.clients_.begin();
 
 		// Si c'est un message privé au chatbot, ne pas traiter l'envoi de fichier
@@ -386,5 +323,90 @@ void Parsing::PRIVMSG(Client &client, std::string &buffer)
 				}
 			}
 		}
+	}
+}
+
+bool Parsing::CMD_PASS(Client &client, std::string &password)
+{
+	// Si le client est déjà connecté, on lui envoie un message d'erreur
+	if (client.IsConnected() == true)
+	{
+		server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
+		return true;
+	}
+
+	// Verifie si le client a bien envoyé un mot de passe
+	if (!Hasher::compare(password, server.password_))
+	{
+		log::write(log::INFO, "L'utilisateur : fd(" + log::toString(client.getSocketFd()) + ") a rentré un mauvais mot de passe");
+		server.send_data(client.getSocketFd(), ERR_PASSWD_MISMATCH);
+		server.DisconnectClient(client);
+		return false;
+	}
+	client.passwordVerified(); // Valider le mot de passe
+	return true;
+}
+
+void Parsing::CMD_USER(Client &client, std::string &username)
+{
+	// Si le client est déjà connecté, on lui envoie un message d'erreur
+	if (client.IsConnected() == true)
+	{
+		server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
+		return;
+	}
+
+	// Verifie si le client a bien envoyé un nom d'utilisateur
+	username = username.substr(0, username.find(" "));
+	client.setUserName(username);
+	username = username.substr(username.find(":") + 1, username.size() - username.find(":") - 1);
+	client.setRealName(username);
+}
+
+/**
+ * @brief Gère la commande NICK pour changer le pseudonyme d'un client.
+ *
+ * Cette fonction vérifie si le nouveau pseudonyme est valide et disponible.
+ * Si le pseudonyme est déjà utilisé par un autre client, une erreur est renvoyée.
+ * Si le pseudonyme est vide ou correspond au nom du chatbot, une erreur est renvoyée.
+ * Si le changement de pseudonyme est valide, le pseudonyme du client est mis à jour
+ * et un message de bienvenue est envoyé si le client n'avait pas de pseudonyme auparavant.
+ *
+ * @param client Référence vers l'objet Client qui souhaite changer de pseudonyme.
+ * @param buffer Référence vers la chaîne de caractères contenant la commande et le nouveau pseudonyme.
+ */
+void Parsing::CMD_NICK(Client &client, std::string &nickname)
+{
+	if (client.getNickname() == nickname)
+		return;
+
+	// Si le nickname est déjà utilisé
+	for (std::map<int, Client>::iterator it = server.clients_.begin(); it != server.clients_.end(); ++it)
+	{
+		if (it->second.getNickname() != "" && it->second.getNickname() == nickname && it->second.getSocketFd() != client.getSocketFd())
+		{
+			std::string nick = client.getNickname() != "" ? client.getNickname() + " " : "";
+			server.send_data(client.getSocketFd(), ERR_NICKNAME_IN_USE(nick, nickname));
+			return;
+		}
+	}
+
+	// Si le nickname est vide ou qu'il veut prendre le nom du chatbot
+	if (nickname.find("#") != std::string::npos || server.chatbot_->getNickname() == nickname)
+	{
+		std::string old_nick = client.getNickname() != "" ? client.getNickname() : "";
+		server.send_data(client.getSocketFd(), ERR_ERRONEUS_NICKNAME(old_nick, nickname));
+		return;
+	}
+
+	std::string tmp = client.getNickname();
+	server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), nickname), false, true);
+	client.setNickname(nickname);
+	// Si le client n'a pas encore de pseudo, on lui envoie un message de bienvenue
+	if (tmp.size() == 0)
+	{
+		std::string str = "PRIVMSG " + client.getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
+		PRIVMSG(*server.chatbot_, str);
+		server.send_data(client.getSocketFd(), WELCOME(client.getNickname()), true, false);
 	}
 }

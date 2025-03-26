@@ -19,16 +19,20 @@ class Parsing
 private:
 	Server &server;
 
-	bool capability(Client &client, std::string &buffer);
-	bool InitializeUser(Client &client, std::string &buffer);
+	void capability(Client &client, std::string &args);
 	bool check_enough_params(Client &client, std::string &buffer);
 	bool IsRegistered(Client &client, std::string &buffer);
 
 	// CHANNEL
-	void Who(Client &client, std::string &buffer);
+	void Who(Client &client, std::string &channel);
 	void joinChannel(Client &client, std::string &channelName);
-	void partChannel(Client &client, std::string &channelName, std::string &message);
-	void PRIVMSG(Client &client, std::string &buffer);
+	void partChannel(Client &client, std::string &args);
+	void PRIVMSG(Client &client, std::string &args);
+
+	// CLIENT
+	bool CMD_PASS(Client &client, std::string &password);
+	void CMD_USER(Client &client, std::string &username);
+	void CMD_NICK(Client &client, std::string &nickname);
 
 public:
 	Parsing(Server &server);
