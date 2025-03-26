@@ -15,7 +15,6 @@ class Server;
 struct Client_channel
 {
 	Client _client;
-	bool is_connected; // pour le ban
 	bool _is_operator;
 };
 
