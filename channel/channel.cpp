@@ -14,8 +14,7 @@
  **/
 Channel::Channel(Server &server, std::string &name, Client &client) : _server(server), _name(name)
 {
-	_operators.push_back(client.getSocketFd());
-	addClient(client);
+	addClient(client, true);
 }
 
 Channel::~Channel() {}
@@ -28,10 +27,17 @@ Channel::~Channel() {}
  *
  * @param client L'objet Client représentant le client à ajouter.
  **/
-void Channel::addClient(Client client)
+void Channel::addClient(Client client, bool _operator)
 {
-
-	_clients[client.getSocketFd()] = client;
+	// Si le client est déjà dans le canal, on ne l'ajoute pas
+	if (_clients.find(client.getSocketFd()) != _clients.end())
+	{
+		_clients[client.getSocketFd()]._connected = true;
+		return;
+	}
+	_clients[client.getSocketFd()]._client = client;
+	_clients[client.getSocketFd()]._connected = true;
+	_clients[client.getSocketFd()]._operator = _operator;
 	this->broadcastMessage(client, USER_JOIN_CHANNEL(client.getUniqueName(), _name));
 }
 
@@ -43,9 +49,9 @@ void Channel::addClient(Client client)
  *
  * @param client Référence vers l'objet Client à ajouter en tant qu'opérateur.
  **/
-void Channel::addOperator(Client &client)
+void Channel::addOperator(Client_channel &client)
 {
-	_operators.push_back(client.getSocketFd());
+	client._operator = true;
 }
 
 /**
@@ -56,9 +62,9 @@ void Channel::addOperator(Client &client)
  *
  * @param client Référence vers l'objet Client à retirer des opérateurs.
  **/
-void Channel::removeOperator(Client &client)
+void Channel::removeOperator(Client_channel &client)
 {
-	_operators.remove(client.getSocketFd());
+	client._operator = false;
 }
 
 /**
@@ -71,11 +77,11 @@ void Channel::removeOperator(Client &client)
  * @param client L'objet Client à supprimer du canal.
  * @return true si le client a été supprimé avec succès, false sinon.
  **/
-bool Channel::removeClient(Client client)
+bool Channel::disconnectClientChannel(Client client)
 {
 	if (_clients.find(client.getSocketFd()) == _clients.end())
 		return false;
-	_clients.erase(client.getSocketFd());
+	_clients[client.getSocketFd()]._connected = false;
 	return true;
 }
 
@@ -92,12 +98,12 @@ bool Channel::removeClient(Client client)
 std::string Channel::getAllClientsString()
 {
 	std::string clients;
-	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (std::find(_operators.begin(), _operators.end(), it->first) != _operators.end())
-			clients += "@" + it->second.getNickname() + " ";
+		if (it->second._operator)
+			clients += "@" + it->second._client.getNickname() + " ";
 		else
-			clients += it->second.getNickname() + " ";
+			clients += it->second._client.getNickname() + " ";
 	}
 	clients.substr(0, clients.size() - 1);
 	return clients;
@@ -113,7 +119,7 @@ std::string Channel::getAllClientsString()
  **/
 void Channel::broadcastMessage(std::string message)
 {
-	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 		_server.send_data(it->first, message, false, true);
 }
 
@@ -128,7 +134,7 @@ void Channel::broadcastMessage(std::string message)
  **/
 void Channel::broadcastMessage(Client client, std::string message)
 {
-	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
 		if (it->first != client.getSocketFd())
 			_server.send_data(it->first, message, false, true);

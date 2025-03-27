@@ -221,7 +221,7 @@ void Parsing::partChannel(Client &client, std::string &args)
 	{
 		if (it->first == channelName)
 		{
-			if (it->second.removeClient(client) == false)
+			if (it->second.disconnectClientChannel(client) == false)
 				break;
 			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), channelName, message));
 			return;
@@ -446,7 +446,7 @@ void Parsing::CMD_NICK(Client &client, std::string &nickname)
 	// Si le client n'a pas encore de pseudo, on lui envoie un message de bienvenue
 	if (tmp.size() == 0)
 	{
-		std::string str = "PRIVMSG " + client.getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
+		std::string str = client.getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
 		PRIVMSG(*server.chatbot_, str);
 		server.send_data(client.getSocketFd(), WELCOME(client.getNickname()), true, false);
 	}

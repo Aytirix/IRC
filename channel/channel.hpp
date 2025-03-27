@@ -15,7 +15,8 @@ class Server;
 struct Client_channel
 {
 	Client _client;
-	bool _is_operator;
+	bool _connected;
+	bool _operator;
 };
 
 class Channel
@@ -23,24 +24,23 @@ class Channel
 private:
 	Server &_server;
 	std::string &_name;
-	std::map<int, Client> _clients;
+	std::map<int, Client_channel> _clients;
 	std::list<int> _operators;
 	int limit; // A implementer -l
 	bool _mode_topic; // A implementer -t
 	std::string password; // A implenter -k
 
 public:
-
 	Channel(Server &server,std::string &name, Client &client);
     ~Channel();
 
 	// Methods
-	void addClient(Client client);
-	bool removeClient(Client client);
+	void addClient(Client client, bool _operator = false);
+	bool disconnectClientChannel(Client client);
 	void broadcastMessage(std::string message);
 	void broadcastMessage(Client client, std::string message);
-	void addOperator(Client &client);
-	void removeOperator(Client &client);
+	void addOperator(Client_channel &client);
+	void removeOperator(Client_channel &client);
 	std::string getAllClientsString();
 
     // Getters
