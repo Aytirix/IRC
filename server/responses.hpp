@@ -50,9 +50,12 @@
 /* ----------------------- NICK ----------------------- */
 #define ERR_NICKNAME_IN_USE(nickname, use_nickname) "433 " + nickname + use_nickname + " :Nickname is already in use"
 #define ERR_NICKNAME_MISSING "431 :No nickname given"
-#define ERR_ERRONEUS_NICKNAME(old_nickname, new_nickname) "432 " + old_nickname + " " + new_nickname + " :Erroneus nickname"
+#define ERR_ERRONEUS_NICKNAME(old_nickname, new_nickname) "432 " + old_nickname + " " + new_nickname + " :Erroneous nickname"
 #define NICKNAME_CHANGED(unique_nickname, nickname) ":" + unique_nickname + " NICK :" + nickname
+#define char_autorized "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]\\_^{|}"
 
+/* ----------------------- USERNAME ----------------------- */
+#define INVALID_USERNAME(ip, username_invalid) "ERROR :Closing Link: " + ip + " (Invalid username [~" + username_invalid + "])"
 
 /* ----------------------- CAPABILITY ----------------------- */
 #define CAP_LIST(list) "CAP * LS :" + list

@@ -6,6 +6,22 @@ Parsing::Parsing(Server &server) : server(server) {}
 Parsing::~Parsing() {}
 
 /**
+ * @brief toLower
+ * Convertit une string en minuscules
+ * @param str : la string à convertir
+ * @return la string convertie
+ **/
+std::string Parsing::toLower(std::string str)
+{
+	std::string lower;
+	if (str.empty())
+		return str;
+	for (std::size_t i = 0; i < str.length(); ++i)
+		lower += std::tolower(str[i]);
+	return lower;
+}
+
+/**
  * @brief split
  * Split une string en fonction d'un délimiteur
  * @param str : la string à split
@@ -59,7 +75,7 @@ std::string Parsing::RemoveHiddenChar(std::string &str)
  **/
 bool Parsing::check_enough_params(Client &client, std::string &buffer)
 {
-	std::string command = "JOIN PART WHO PRIVMSG NICK";
+	std::string command = "JOIN PART WHO PRIVMSG NICK USER PASS";
 	std::vector<std::string> params = split(command, ' ');
 	bool found = false;
 	for (size_t i = 0; i < params.size(); i++)
@@ -120,6 +136,8 @@ bool Parsing::IsRegistered(Client &client, std::string &buffer)
 bool Parsing::init_parsing(Client &client, std::string &buffer)
 {
 	buffer = RemoveHiddenChar(buffer);
+	if (buffer.size() == 0)
+		return true;
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 
 	if (!check_enough_params(client, buffer))
@@ -134,7 +152,7 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	if (command == "CAP")
 		capability(client, args);
 	else if (command == "USER")
-		CMD_USER(client, args);
+		return CMD_USER(client, args);
 	else if (command == "PASS")
 		return CMD_PASS(client, args);
 	else if (command == "NICK")
@@ -277,7 +295,7 @@ void Parsing::capability(Client &client, std::string &args)
  **/
 void Parsing::PRIVMSG(Client &client, std::string &args)
 {
-// Si pour le message on ne trouve pas de : et qu'il y a pas au moins un caractere après le :
+	// Si pour le message on ne trouve pas de : et qu'il y a pas au moins un caractere après le :
 	if (args.find(" :") == std::string::npos || args.find(":") == args.size() - 1)
 	{
 		server.send_data(client.getSocketFd(), TEXT_NOT_FOUND(client.getNickname()));
@@ -347,13 +365,28 @@ bool Parsing::CMD_PASS(Client &client, std::string &password)
 	return true;
 }
 
-void Parsing::CMD_USER(Client &client, std::string &username)
+bool Parsing::CMD_USER(Client &client, std::string &username)
 {
 	// Si le client est déjà connecté, on lui envoie un message d'erreur
 	if (client.IsConnected() == true)
 	{
 		server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()));
-		return;
+		return true;
+	}
+
+	// S'il commence par un caractère non autorisé
+	// S'il veut prendre le nom du chatbot
+	// S'il contient des caractères interdit
+	// S'il fait moins de 3 caractères
+	// S'il fait plus de 9 caractères
+	if (std::string("0123456789!@#$%^&*()+[]\\_^{|}").find(username[0]) != std::string::npos ||
+		username.find_first_of("!@#$%^&*()+[]\\^{|}") != std::string::npos ||
+		username.size() < 3 ||
+		username.size() > 30)
+	{
+		std::string old_nick = client.getNickname() != "" ? client.getNickname() : "";
+		server.send_data(client.getSocketFd(), INVALID_USERNAME(client.getIp(), username.substr(0, username.find(" "))), false, true);
+		return false;
 	}
 
 	// Verifie si le client a bien envoyé un nom d'utilisateur
@@ -361,6 +394,7 @@ void Parsing::CMD_USER(Client &client, std::string &username)
 	client.setUserName(username);
 	username = username.substr(username.find(":") + 1, username.size() - username.find(":") - 1);
 	client.setRealName(username);
+	return true;
 }
 
 /**
@@ -380,10 +414,11 @@ void Parsing::CMD_NICK(Client &client, std::string &nickname)
 	if (client.getNickname() == nickname)
 		return;
 
-	// Si le nickname est déjà utilisé
+	// Si le nickname est déjà utilisé, insensible à la case
+	std::string tmp_nickname = this->toLower(nickname);
 	for (std::map<int, Client>::iterator it = server.clients_.begin(); it != server.clients_.end(); ++it)
 	{
-		if (it->second.getNickname() != "" && it->second.getNickname() == nickname && it->second.getSocketFd() != client.getSocketFd())
+		if (it->second.getNickname() != "" && this->toLower(it->second.getNickname()) == tmp_nickname && it->second.getSocketFd() != client.getSocketFd())
 		{
 			std::string nick = client.getNickname() != "" ? client.getNickname() + " " : "";
 			server.send_data(client.getSocketFd(), ERR_NICKNAME_IN_USE(nick, nickname));
@@ -391,8 +426,14 @@ void Parsing::CMD_NICK(Client &client, std::string &nickname)
 		}
 	}
 
-	// Si le nickname est vide ou qu'il veut prendre le nom du chatbot
-	if (nickname.find("#") != std::string::npos || server.chatbot_->getNickname() == nickname)
+	// S'il commence par un caractère non autorisé
+	// S'il veut prendre le nom du chatbot
+	// S'il contient des caractères interdit
+	// S'il fait plus de 9 caractères
+	if (std::string("0123456789!@#$%^&*()[]\\_^{|}").find(nickname[0]) != std::string::npos ||
+		server.chatbot_->getNickname() == nickname ||
+		nickname.find_first_of("!@#$%^&*()+") != std::string::npos ||
+		nickname.size() > 9)
 	{
 		std::string old_nick = client.getNickname() != "" ? client.getNickname() : "";
 		server.send_data(client.getSocketFd(), ERR_ERRONEUS_NICKNAME(old_nick, nickname));

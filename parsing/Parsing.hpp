@@ -31,7 +31,7 @@ private:
 
 	// CLIENT
 	bool CMD_PASS(Client &client, std::string &password);
-	void CMD_USER(Client &client, std::string &username);
+	bool CMD_USER(Client &client, std::string &username);
 	void CMD_NICK(Client &client, std::string &nickname);
 
 public:
@@ -42,6 +42,7 @@ public:
 	bool init_parsing(Client &client, std::string &buffer);
 	std::string RemoveHiddenChar(std::string &str);
 	std::vector<std::string> split(const std::string &str, char delim);
+	std::string toLower(std::string str);
 };
 
 #endif
