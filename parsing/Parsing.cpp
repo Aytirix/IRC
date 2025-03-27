@@ -374,24 +374,24 @@ bool Parsing::CMD_USER(Client &client, std::string &username)
 		return true;
 	}
 
+	std::string name = username.substr(0, username.find(" "));
 	// S'il commence par un caractère non autorisé
 	// S'il veut prendre le nom du chatbot
 	// S'il contient des caractères interdit
 	// S'il fait moins de 3 caractères
 	// S'il fait plus de 9 caractères
-	if (std::string("0123456789!@#$%^&*()+[]\\_^{|}").find(username[0]) != std::string::npos ||
-		username.find_first_of("!@#$%^&*()+[]\\^{|}") != std::string::npos ||
-		username.size() < 3 ||
-		username.size() > 30)
+	if (std::string("0123456789!@#$%^&*()+[]\\_^{|}").find(name[0]) != std::string::npos ||
+		name.find_first_of("!@#$%^&*()+[]\\^{|}") != std::string::npos ||
+		name.size() < 3 ||
+		name.size() > 30)
 	{
 		std::string old_nick = client.getNickname() != "" ? client.getNickname() : "";
-		server.send_data(client.getSocketFd(), INVALID_USERNAME(client.getIp(), username.substr(0, username.find(" "))), false, true);
+		server.send_data(client.getSocketFd(), INVALID_USERNAME(client.getIp(), name), false, true);
 		return false;
 	}
 
 	// Verifie si le client a bien envoyé un nom d'utilisateur
-	username = username.substr(0, username.find(" "));
-	client.setUserName(username);
+	client.setUserName(name);
 	username = username.substr(username.find(":") + 1, username.size() - username.find(":") - 1);
 	client.setRealName(username);
 	return true;
