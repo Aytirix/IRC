@@ -10,8 +10,6 @@
 /* --------- INVITE --------- */
 
 
-/* --------- KICK ----------- */
-
 
 /* --------- PING ----------- */
 
@@ -23,9 +21,12 @@
 #define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " :" + message
 #define USER_NOT_IN_CHANNEL(nickname, channel) "442 " + nickname + " " + channel + " :You're not on that channel"
 #define USER_JOIN_CHANNEL(unique_nickname, channel) ":" + unique_nickname + " JOIN " + channel
-#define ERR_NOSUCHCHANNEL(nickname, channel) "403 " + nickname + " " + channel + " :No such channel"
+#define ERR_NOSUCH_CHANNEL(nickname, channel) "403 " + nickname + " " + channel + " :No such channel"
 #define TEXT_NOT_FOUND(nickname) "412 " + nickname + " :No text to send"
-
+/* --------- KICK ----------- */
+#define NOT_OPERATOR(unique_nickname, channel) "482 " + unique_nickname + " " + channel + " :You're not a channel operator"
+#define KICK(unique_nickname, channel, nickname_kick, message) ":" + unique_nickname + " KICK " + channel + " " + nickname_kick + " :" + message
+#define ERR_NOSUCH_NICK(nickname, target, channel) "441 " + nickname + " " + target + " " + channel + " :They aren't on that channel"
 /* --------- WHO --------- */
 #define END_OF_WHO(nickname, channel) "315 " + nickname + " " + channel + " :End of /WHO list"
 #define WHO_LIST_USER(nickname, channel, list_users) "353 " + nickname + " @ " + channel + " :" + list_users
@@ -34,7 +35,7 @@
 
 /* --------- MSG PRIVE ------ */
 #define PRIV_MSG(unique_nickname, target, message) ":" + unique_nickname + " PRIVMSG " + target + " :" + message
-
+#define PRIV_MSG_NO_RECIPIENT(nickname) "411 " +  nickname + " :No recipient given (PRIVMSG)"
 
 /* ----------------------- CONNEXION ----------------------- */
 #define WELCOME(nickname) "001 "+ nickname +" :Bienvenue "+ nickname +" sur le serveur 42Project !"

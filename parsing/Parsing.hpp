@@ -4,15 +4,13 @@
 
 #include <list>
 #include <string>
-#include <map>
+#include <vector>
 #include <unistd.h>
+
 #include "../client/client.hpp"
-#include "../server/server.hpp"
-#include "../server/responses.hpp"
-#include "../server/hasher.hpp"
-#include "../log/log.hpp"
 
 class Server;
+class Chatbot;
 
 class Parsing
 {
@@ -20,19 +18,20 @@ private:
 	Server &server;
 
 	void capability(Client &client, std::string &args);
-	bool check_enough_params(Client &client, std::string &buffer);
-	bool IsRegistered(Client &client, std::string &buffer);
+	bool check_enough_params(Client &client, std::string &command, std::string &args);
 
 	// CHANNEL
 	void Who(Client &client, std::string &channel);
 	void joinChannel(Client &client, std::string &channelName);
 	void partChannel(Client &client, std::string &args);
 	void PRIVMSG(Client &client, std::string &args);
+	void CMD_KICK(Client &client, std::string &args);
 
 	// CLIENT
 	bool CMD_PASS(Client &client, std::string &password);
 	bool CMD_USER(Client &client, std::string &username);
 	void CMD_NICK(Client &client, std::string &nickname);
+
 
 public:
 	Parsing(Server &server);

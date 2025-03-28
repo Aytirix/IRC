@@ -1,5 +1,7 @@
 #include "channel.hpp"
-#include <algorithm>
+#include "../server/server.hpp"
+#include "../server/responses.hpp"
+#include "../log/log.hpp"
 
 /**
  * @brief Constructeur de la classe Channel.
@@ -33,7 +35,7 @@ void Channel::addClient(Client client, bool _operator)
 	if (_clients.find(client.getSocketFd()) != _clients.end())
 	{
 		_clients[client.getSocketFd()]._connected = true;
-		return;
+		return this->broadcastMessage(client, USER_JOIN_CHANNEL(client.getUniqueName(), _name));
 	}
 	_clients[client.getSocketFd()]._client = client;
 	_clients[client.getSocketFd()]._connected = true;
@@ -77,7 +79,7 @@ void Channel::removeOperator(Client_channel &client)
  * @param client L'objet Client à supprimer du canal.
  * @return true si le client a été supprimé avec succès, false sinon.
  **/
-bool Channel::disconnectClientChannel(Client client)
+bool Channel::disconnectClientChannel(Client &client)
 {
 	if (_clients.find(client.getSocketFd()) == _clients.end())
 		return false;
@@ -132,11 +134,46 @@ void Channel::broadcastMessage(std::string message)
  * @param client Le client qui envoie le message.
  * @param message Le message à diffuser.
  **/
-void Channel::broadcastMessage(Client client, std::string message)
+void Channel::broadcastMessage(Client &client, std::string message)
 {
 	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
 		if (it->first != client.getSocketFd())
 			_server.send_data(it->first, message, false, true);
 	}
+}
+
+Client_channel Channel::getClientByNickname(std::string &nickname)
+{
+	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		if (it->second._client.getNickname() == nickname)
+			return it->second;
+	}
+	throw std::runtime_error("Client not found");
+}
+
+void Channel::kickClient(Client &client, std::string &client_kick, std::string &message)
+{
+	log::write(log::DEBUG, "_name : '" + _name + "'");
+	if (_clients.find(client.getSocketFd()) == _clients.end())
+		return _server.send_data(client.getSocketFd(), USER_NOT_IN_CHANNEL(client.getNickname(), _name));
+	if (_clients[client.getSocketFd()]._operator == false)
+		return _server.send_data(client.getSocketFd(), NOT_OPERATOR(client.getUniqueName(), _name));
+	Client_channel kick;
+	try
+	{
+		kick = this->getClientByNickname(client_kick);
+		if (kick._connected == false)
+			return _server.send_data(client.getSocketFd(), ERR_NOSUCH_NICK(client.getUniqueName(), client_kick, _name));
+	}
+	catch (std::exception &e)
+	{
+		return _server.send_data(client.getSocketFd(), ERR_NOSUCH_NICK(client.getUniqueName(), client_kick, _name));
+	}
+	kick._connected = false;
+	log::write(log::DEBUG, "_name : '" + _name + "'");
+	log::write(log::DEBUG, "client_kick : " + client_kick);
+	log::write(log::DEBUG, "message : " + message);
+	this->broadcastMessage(KICK(client.getUniqueName(), _name, kick._client.getNickname(), message));
 }

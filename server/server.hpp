@@ -16,17 +16,11 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 
-#include "../parsing/Parsing.hpp"
-#include "../client/client.hpp"
-#include "../log/log.hpp"
-#include "../channel/channel.hpp"
-#include "../chatbot/chatbot.hpp"
-#include "hasher.hpp"
-
 
 class Parsing;
 class Channel;
 class Chatbot;
+class Client;
 
 class Server
 {
@@ -40,15 +34,15 @@ public:
 	void send_data(int client_fd, std::string data, bool server_name = true, bool date = true);
 
 	// Getters
-	int getPort() const { return port_; }
+	int getPort() const { return _port; }
 
 private:
-	int listen_fd_;
-	int port_;
-	unsigned long password_;
-	std::map<int, Client> clients_;
-	std::map<std::string, Channel> channels_;
-	Chatbot *chatbot_;
+	int _listen_fd;
+	int _port;
+	unsigned long _password;
+	std::map<int, Client> _clients;
+	std::map<std::string, Channel> _channels;
+	Chatbot *_chatbot;
 
 	bool setNonBlocking(int fd);
 	void handleNewConnection();

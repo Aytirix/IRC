@@ -10,8 +10,8 @@
 #include <cstdio>
 #include <poll.h>
 
-#include "../client/client.hpp"
 #include "../server/server.hpp"
+#include "../client/client.hpp"
 
 // Structure pour représenter un message
 struct Message

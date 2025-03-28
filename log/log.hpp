@@ -41,22 +41,22 @@ public:
 		switch (level)
 		{
 		case INFO:
-			levelStr = BLUE "INFO";
+			levelStr = BLUE "INFO    ";
 			break;
 		case WARNING:
-			levelStr = YELLOW "WARNING";
+			levelStr = YELLOW "WARNING ";
 			break;
 		case ERROR:
-			levelStr = RED "ERROR";
+			levelStr = RED "ERROR   ";
 			break;
 		case RECEIVED:
 			levelStr = MAGENTA "RECEIVED";
 			break;
 		case SENT:
-			levelStr = BRIGHT_CYAN "SENT";
+			levelStr = BRIGHT_CYAN "SENT    ";
 			break;
 		case DEBUG:
-			levelStr = BRIGHT_YELLOW "DEBUG";
+			levelStr = BRIGHT_YELLOW "DEBUG   ";
 			break;
 		}
 

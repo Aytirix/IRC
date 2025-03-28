@@ -1,18 +1,26 @@
 #include "server.hpp"
 
+#include "../chatbot/chatbot.hpp"
+#include "../client/client.hpp"
+#include "../channel/channel.hpp"
+#include "../parsing/Parsing.hpp"
+#include "../log/log.hpp"
+#include "responses.hpp"
+#include "hasher.hpp"
+
 Server::Server(int port, const std::string &password)
-	: listen_fd_(-1), port_(port), password_(Hasher::hash(password))
+	: _listen_fd(-1), _port(port), _password(Hasher::hash(password))
 {
 	// initialiser la map des clients
-	clients_.clear();
-	channels_.clear();
-	chatbot_ = new Chatbot(*this);
+	_clients.clear();
+	_channels.clear();
+	_chatbot = new Chatbot(*this);
 }
 
 Server::~Server()
 {
-	delete chatbot_;
-	for (std::map<int, Client>::iterator it = clients_.begin(); it != clients_.end(); ++it)
+	delete _chatbot;
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 		close(it->first);
 }
 
@@ -25,7 +33,7 @@ void Server::run()
 	{
 		// Reconstruire le tableau de pollfd à partir de la map
 		std::vector<pollfd> pollfds;
-		for (std::map<int, Client>::iterator it = clients_.begin(); it != clients_.end(); ++it)
+		for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 			pollfds.push_back(it->second.getSocketPfd());
 
 		int ret = poll(&pollfds[0], pollfds.size(), -1);
@@ -43,7 +51,7 @@ void Server::run()
 				int fd = pollfds[i].fd;
 				// Si le descripteur est celui du socket d'écoute, c'est une nouvelle connexion
 				// Sinon, c'est un client qui envoie des données
-				if (fd == listen_fd_)
+				if (fd == _listen_fd)
 					handleNewConnection();
 				else
 					handleClientData(fd);
@@ -61,18 +69,18 @@ void Server::run()
 bool Server::init()
 {
 	// Création du socket d'écoute
-	listen_fd_ = socket(AF_INET, SOCK_STREAM, 0);
-	if (listen_fd_ < 0)
+	_listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (_listen_fd < 0)
 	{
 		perror("socket");
 		return false;
 	}
 
 	// Mettre le socket en mode non bloquant
-	if (!setNonBlocking(listen_fd_))
+	if (!setNonBlocking(_listen_fd))
 	{
 		perror("setNonBlocking");
-		close(listen_fd_);
+		close(_listen_fd);
 		return false;
 	}
 
@@ -81,41 +89,41 @@ bool Server::init()
 	std::memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(port_);
+	serv_addr.sin_port = htons(_port);
 
 	// Permettre la réutilisation de l'adresse du serveur
 	int opt = 1;
-	if (setsockopt(listen_fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	if (setsockopt(_listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
 	{
 		perror("setsockopt");
-		close(listen_fd_);
+		close(_listen_fd);
 		return false;
 	}
 
 	// Lier le socket d'écoute à l'adresse du serveur
-	if (bind(listen_fd_, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	if (bind(_listen_fd, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
 	{
 		perror("bind");
-		close(listen_fd_);
+		close(_listen_fd);
 		return false;
 	}
 
 	// Mettre le socket en mode écoute
-	if (listen(listen_fd_, 10) < 0)
+	if (listen(_listen_fd, 10) < 0)
 	{
 		perror("listen");
-		close(listen_fd_);
+		close(_listen_fd);
 		return false;
 	}
 
 	// Ajout du socket d'écoute dans la map
 	pollfd listen_pfd;
-	listen_pfd.fd = listen_fd_;
+	listen_pfd.fd = _listen_fd;
 	listen_pfd.events = POLLIN;
 	Client listenClient(listen_pfd, "listen");
-	clients_.insert(std::make_pair(listen_fd_, listenClient));
+	_clients.insert(std::make_pair(_listen_fd, listenClient));
 
-	log::log::write(log::log::INFO, "Le serveur a démarré sur le port " + log::toString(port_));
+	log::log::write(log::log::INFO, "Le serveur a démarré sur le port " + log::toString(_port));
 	return true;
 }
 
@@ -139,7 +147,7 @@ void Server::handleNewConnection()
 {
 	sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
-	int client_fd = accept(listen_fd_, (sockaddr *)&client_addr, &client_len);
+	int client_fd = accept(_listen_fd, (sockaddr *)&client_addr, &client_len);
 	if (client_fd < 0)
 	{
 		if (errno != EWOULDBLOCK)
@@ -156,8 +164,8 @@ void Server::handleNewConnection()
 	client_pfd.fd = client_fd;
 	client_pfd.events = POLLIN;
 	Client client(client_pfd, inet_ntoa(client_addr.sin_addr));
-	clients_.insert(std::make_pair(client_fd, client));
-	chatbot_->addClient(client);
+	_clients.insert(std::make_pair(client_fd, client));
+	_chatbot->addClient(client);
 	log::write(log::INFO, "Nouvelle connexion : fd(" + log::toString(client_fd) + ")");
 }
 
@@ -168,15 +176,15 @@ void Server::handleNewConnection()
 void Server::DisconnectClient(Client &client)
 {
 	// parcourir les channels et supprimer le client
-	for (std::map<std::string, Channel>::iterator it = channels_.begin(); it != channels_.end(); ++it)
+	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		if (it->second.disconnectClientChannel(client))
 			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, "Leaving"));
 	}
 	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
 	close(client.getSocketFd());
-	chatbot_->deleteClient(client);
-	clients_.erase(client.getSocketFd());
+	_chatbot->deleteClient(client);
+	_clients.erase(client.getSocketFd());
 }
 
 /**
@@ -188,14 +196,14 @@ void Server::DisconnectClient(Client &client, std::string message)
 {
 	if (message[0] == ':')
 		message.erase(0, 1);
-	for (std::map<std::string, Channel>::iterator it = channels_.begin(); it != channels_.end(); ++it)
+	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		if (it->second.disconnectClientChannel(client))
 			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, message));
 	}
 	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
 	close(client.getSocketFd());
-	clients_.erase(client.getSocketFd());
+	_clients.erase(client.getSocketFd());
 }
 
 /**
@@ -214,14 +222,14 @@ void Server::handleClientData(int client_fd)
 	{
 		if (n < 0)
 			perror("read");
-		this->DisconnectClient(clients_[client_fd]);
+		this->DisconnectClient(_clients[client_fd]);
 		return;
 	}
 	tempBuffer[n] = '\0';
 
 	// Ajouter les données reçues au buffer du client
-	std::map<int, Client>::iterator it = clients_.find(client_fd);
-	if (it == clients_.end())
+	std::map<int, Client>::iterator it = _clients.find(client_fd);
+	if (it == _clients.end())
 	{
 		std::cerr << "Erreur : client introuvable pour fd " << client_fd << std::endl;
 		return;
@@ -240,7 +248,7 @@ void Server::handleClientData(int client_fd)
 		if (parsing.init_parsing(client, command) == false)
 		{
 			// verifier que le client a bien été supprimé
-			if (clients_.find(client_fd) != clients_.end())
+			if (_clients.find(client_fd) != _clients.end())
 				DisconnectClient(client);
 			return;
 		}
@@ -264,12 +272,12 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 		data.insert(0, "@time=" + time + " ");
 	}
 
-	log::write(log::SENT, " fd(" + log::toString(client_fd) + ") : '" + data + "'");
+	log::write(log::SENT, "fd("+ log::toString(client_fd) + ") : '" + data + "'");
 
 	if (data.size() == 0 || data[data.size() - 1] != '\n')
 		data += '\n';
 
-	Client &client = clients_[client_fd];
+	Client &client = _clients[client_fd];
 	client.getSendBuffer() += data;
 
 	std::string &sendBuffer = client.getSendBuffer();
