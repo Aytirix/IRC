@@ -91,6 +91,7 @@ bool Parsing::check_enough_params(Client &client, std::string &command, std::str
 	params["USER"] = 1;
 	params["PASS"] = 1;
 	params["KICK"] = 2;
+	params["TOPIC"] = 1;
 
 	std::map<std::string, std::size_t>::iterator it = params.find(command);
 	if (it == params.end())
@@ -155,6 +156,8 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 			this->PRIVMSG(client, args);
 		else if (command == "KICK")
 			this->CMD_KICK(client, args);
+		else if (command == "TOPIC")
+			this->CMD_TOPIC(client, args);
 		else
 			server.send_data(client.getSocketFd(), ERR_UNKNOWNCOMMAND(client.getNickname(), buffer.substr(0, buffer.find(" "))));
 	}
@@ -238,27 +241,48 @@ void Parsing::joinChannel(Client &client, std::string &channelName)
 	}
 	else
 		it->second.addClient(client);
-	server.send_data(client.getSocketFd(), USER_JOIN_CHANNEL(client.getUniqueName(), channelName), false, true);
 }
 
+/**
+ * @brief Gère la commande TOPIC
+ * Cette commande permet de kicker un client d'un channel
+ * @param client : le client qui a envoyé la commande
+ * @param args : les arguments de la commande
+ **/
 void Parsing::CMD_KICK(Client &client, std::string &args)
 {
-	log::write(log::DEBUG, "Parsing::CMD_KICK args : '" + args + "'");
 	std::string channelName = args.substr(0, args.find(" "));
 	size_t firstSpace = args.find(" ");
 	std::string clientName = args.substr(args.find(" ") + 1, args.find(" ", firstSpace + 1) - firstSpace - 1);
 	std::string message = (args.find(":") != std::string::npos) ? args.substr(args.find(":") + 1, args.size() - args.find(":") - 1) : clientName;
-	log::write(log::DEBUG, "Parsing::CMD_KICK channelName : '" + channelName + "'");
-	log::write(log::DEBUG, "Parsing::CMD_KICK clientName : '" + clientName + "'");
-	log::write(log::DEBUG, "Parsing::CMD_KICK message : '" + message + "'");
 	std::map<std::string, Channel>::iterator it = server._channels.find(channelName);
 	if (it == server._channels.end())
 	{
 		server.send_data(client.getSocketFd(), ERR_NOSUCH_CHANNEL(client.getNickname(), channelName));
 		return;
 	}
-	log::write(log::DEBUG, "Parsing::CMD_KICK getname : '" + it->second.getname() + "'");
 	it->second.kickClient(client, clientName, message);
+}
+
+/**
+ * @brief Gère la commande TOPIC
+ * Cette commande permet de changer le topic d'un channel
+ * @param client : le client qui a envoyé la commande
+ * @param args : les arguments de la commande
+ **/
+void Parsing::CMD_TOPIC(Client &client, std::string &args)
+{
+	std::string channelName = args.substr(0, args.find(" "));
+	std::string newtopic = args.substr(args.find(":") + 1, args.size() - 1);
+	if (channelName[0] != '#')
+		return server.send_data(client.getSocketFd(), ERR_NOSUCH_CHANNEL(client.getNickname(), channelName));
+
+	if (args.find(":") == std::string::npos)
+		return server.send_data(client.getSocketFd(), NOT_TOPIC_SET(client.getNickname(), channelName));
+	std::map<std::string, Channel>::iterator it = server._channels.find(channelName);
+	if (it == server._channels.end())
+		return server.send_data(client.getSocketFd(), ERR_NOSUCH_CHANNEL(client.getNickname(), channelName));
+	it->second.setTopic(client, newtopic);
 }
 
 /**

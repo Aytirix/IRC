@@ -14,7 +14,7 @@
  * @param name Référence vers une chaîne de caractères représentant le nom du canal.
  * @param client Référence vers l'objet Client initial qui crée le canal.
  **/
-Channel::Channel(Server &server, std::string &name, Client &client) : _server(server), _name(name)
+Channel::Channel(Server &server, std::string &name, Client &client) : _server(server), _name(name), _topic("")
 {
 	addClient(client, true);
 }
@@ -31,16 +31,20 @@ Channel::~Channel() {}
  **/
 void Channel::addClient(Client client, bool _operator)
 {
-	// Si le client est déjà dans le canal, on ne l'ajoute pas
 	if (_clients.find(client.getSocketFd()) != _clients.end())
 	{
 		_clients[client.getSocketFd()]._connected = true;
-		return this->broadcastMessage(client, USER_JOIN_CHANNEL(client.getUniqueName(), _name));
 	}
-	_clients[client.getSocketFd()]._client = client;
-	_clients[client.getSocketFd()]._connected = true;
-	_clients[client.getSocketFd()]._operator = _operator;
+	else
+	{
+		_clients[client.getSocketFd()]._client = client;
+		_clients[client.getSocketFd()]._connected = true;
+		_clients[client.getSocketFd()]._operator = _operator;
+	}
 	this->broadcastMessage(client, USER_JOIN_CHANNEL(client.getUniqueName(), _name));
+	_server.send_data(client.getSocketFd(), USER_JOIN_CHANNEL(client.getUniqueName(), _name), false, true);
+	if (_topic.size())
+		_server.send_data(client.getSocketFd(), INIT_TOPIC(client.getUniqueName(), _name, _topic));
 }
 
 /**
@@ -155,7 +159,6 @@ Client_channel Channel::getClientByNickname(std::string &nickname)
 
 void Channel::kickClient(Client &client, std::string &client_kick, std::string &message)
 {
-	log::write(log::DEBUG, "_name : '" + _name + "'");
 	if (_clients.find(client.getSocketFd()) == _clients.end())
 		return _server.send_data(client.getSocketFd(), USER_NOT_IN_CHANNEL(client.getNickname(), _name));
 	if (_clients[client.getSocketFd()]._operator == false)
@@ -172,8 +175,24 @@ void Channel::kickClient(Client &client, std::string &client_kick, std::string &
 		return _server.send_data(client.getSocketFd(), ERR_NOSUCH_NICK(client.getUniqueName(), client_kick, _name));
 	}
 	kick._connected = false;
-	log::write(log::DEBUG, "_name : '" + _name + "'");
-	log::write(log::DEBUG, "client_kick : " + client_kick);
-	log::write(log::DEBUG, "message : " + message);
 	this->broadcastMessage(KICK(client.getUniqueName(), _name, kick._client.getNickname(), message));
+}
+
+/**
+ * @brief Change le sujet du canal.
+ *
+ * Cette fonction change le sujet du canal et diffuse un message à tous les clients
+ * pour les informer du changement de sujet.
+ *
+ * @param client Le client qui change le sujet.
+ * @param topic Le nouveau sujet du canal.
+ **/
+void Channel::setTopic(Client &client, std::string &topic)
+{
+	if (_clients.find(client.getSocketFd()) == _clients.end())
+		return _server.send_data(client.getSocketFd(), USER_NOT_IN_CHANNEL(client.getNickname(), _name));
+	if (_clients[client.getSocketFd()]._operator == false)
+		return _server.send_data(client.getSocketFd(), NOT_OPERATOR(client.getUniqueName(), _name));
+	this->_topic = topic;
+	this->broadcastMessage(SET_TOPIC(client.getUniqueName(), _name, topic));
 }

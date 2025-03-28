@@ -14,8 +14,6 @@
 /* --------- PING ----------- */
 
 
-/* ----------------------- TOPIC ----------------------- */
-
 
 /* ----------------------- CHANNEL ----------------------- */
 #define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " :" + message
@@ -31,8 +29,10 @@
 #define END_OF_WHO(nickname, channel) "315 " + nickname + " " + channel + " :End of /WHO list"
 #define WHO_LIST_USER(nickname, channel, list_users) "353 " + nickname + " @ " + channel + " :" + list_users
 #define END_OF_NAMES(nickname, channel) "366 " + nickname + " " + channel + " :End of /NAMES list"
-
-
+/* ----------- TOPIC ----------- */
+#define INIT_TOPIC(nickname, channel, topic) "332 " + nickname + " " + channel + " :" + topic
+#define SET_TOPIC(unique_nickname, channel, topic) ":" + unique_nickname + " TOPIC " + channel + " :" + topic
+#define NOT_TOPIC_SET(nickname, channel) "331 " + nickname + " " + channel + " :No topic is set."
 /* --------- MSG PRIVE ------ */
 #define PRIV_MSG(unique_nickname, target, message) ":" + unique_nickname + " PRIVMSG " + target + " :" + message
 #define PRIV_MSG_NO_RECIPIENT(nickname) "411 " +  nickname + " :No recipient given (PRIVMSG)"

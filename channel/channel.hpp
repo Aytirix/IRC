@@ -26,10 +26,11 @@ class Channel
 private:
 	Server &_server;
 	std::string _name;
+	std::string _topic;
 	std::map<int, Client_channel> _clients;
 	std::list<int> _operators;
 	int limit; // A implementer -l
-	bool _mode_topic; // A implementer -t
+	bool restrict_topic; // A implementer -t
 	std::string password; // A implenter -k
 public:
 	Channel(Server &server,std::string &name, Client &client);
@@ -44,6 +45,7 @@ public:
 	void removeOperator(Client_channel &client);
 	std::string getAllClientsString();
 	void kickClient(Client &client, std::string &client_kick, std::string &message);
+	void setTopic(Client &client, std::string &topic);
 
     // Getters
 	Client_channel getClientByNickname(std::string &nickname);

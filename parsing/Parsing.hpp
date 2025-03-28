@@ -26,6 +26,7 @@ private:
 	void partChannel(Client &client, std::string &args);
 	void PRIVMSG(Client &client, std::string &args);
 	void CMD_KICK(Client &client, std::string &args);
+	void CMD_TOPIC(Client &client, std::string &args);
 
 	// CLIENT
 	bool CMD_PASS(Client &client, std::string &password);
