@@ -17,6 +17,8 @@
 /* ----------------------- NICK ----------------------- */
 /* ----------------------- TOPIC ----------------------- */
 /* ----------------------- CAPABILITY ----------------------- */
-#define ERR_CAP_INVALID(nickname, cap) "CAP " + nickname + " NAK :" + cap
+#define ERR_PARAM(nickname, cap) "461 " + nickname + " " + cap + " :Not enough parameters" //moi
+#define ERR_CAP_INVALID(nickname, cap) "CAP " + nickname + " NAK :" + cap //moi
+#define CAP_VALID(nickname, cap) "CAP " + nickname + " ACK :" + cap
 
 #endif

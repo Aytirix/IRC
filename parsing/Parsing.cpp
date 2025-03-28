@@ -1,6 +1,29 @@
 #include "Parsing.hpp"
 #include <string>
 
+
+
+static std::vector<std::string>	ft_split(std::string &buffer)
+{
+	std::vector<std::string>	v_buffer;
+	std::string					word, temp;
+	std::stringstream 			split(buffer);
+	int							i = 0;
+	while (split >> word)
+	{
+		if (i == 2 && word == ":")
+			continue ;
+		else if (i == 2 && word[0] == ':') {
+			temp = word.substr(1);
+			v_buffer.push_back(temp);
+			continue ;
+		}
+		v_buffer.push_back(word);
+		i++;
+	}
+	return (v_buffer);
+}
+
 Parsing::Parsing(Server &server) : server(server) {}
 
 Parsing::~Parsing() {}
@@ -9,17 +32,17 @@ Parsing::~Parsing() {}
 
 bool Parsing::init_parsing(Client &client, std::string &buffer)
 {
+	std::vector<std::string>	v_buffer = ft_split(buffer);
 	clean_buffer(buffer);
+	if (check_params(client, buffer) == false)
+		return (true);
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
-	if (buffer.substr(0, 3) == "CAP")
-	{
-		capabilities(client, buffer);
-	}
+	if (v_buffer[0] == "CAP")
+		capabilities(client, v_buffer);
 	// if (buffer.find("CAP ls "))
 	//PASS
 	//NICK (check)
 	//USER
-	 (void)client;
 	// (void)buffer;
 	return (true);
 }
@@ -34,16 +57,36 @@ void	Parsing::clean_buffer(std::string &buffer)
 		buffer.erase(pos, 1);
 }
 
-void	Parsing::capabilities(Client &client, std::string &buffer)
+void	Parsing::capabilities(Client &client, std::vector<std::string> &v_buffer)
 {
-	if (buffer == "CAP LS 302")
+	if (v_buffer.size() == 1) 
+		server.send_data(client.getSocketFd(), ERR_PARAM(client.getNickname(), v_buffer[0]), true, false);
+	else if (v_buffer[1] == "LS")
 	{
-		std::string str = "CAP * LS : chghost";
+		std::string str = "CAP * LS :chghost";
 		server.send_data(client.getSocketFd(), str, true, false);
 	}
-	else if (buffer ==  )
+	else if (v_buffer[1] == "REQ")
 	{
-		std::string str = "CAP  : chghost";
-		server.send_data(client.getSocketFd(), str, true, false);
+		if (v_buffer.size() == 2 || (v_buffer.size() <= 3 && v_buffer[2] == ":"))
+			return ;
+		else if (v_buffer[2] == "chghost" && v_buffer.size() < 4){
+			server.send_data(client.getSocketFd(), CAP_VALID(client.getNickname(), v_buffer[2]), true, false);
+		}
+		else {
+			std::string str;
+			for (size_t i = 2; i < v_buffer.size(); i++) {
+					str = str + " " +v_buffer[i];
+			}
+			server.send_data(client.getSocketFd(), ERR_CAP_INVALID(client.getNickname(), str), true, false);
+		}
 	}
+}
+
+bool Parsing::check_params(Client &client, std::string &buffer)
+{
+	if (buffer.substr(0, 4) == "PASS "){
+		if (server.password_ != )
+	}
+	
 }

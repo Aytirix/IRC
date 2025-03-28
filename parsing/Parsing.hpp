@@ -4,6 +4,7 @@
 
 #include <list>
 #include <string>
+#include <sstream>
 #include <map>
 #include <unistd.h>
 #include "../client/client.hpp"
@@ -18,14 +19,15 @@ class Parsing
 {
 private:
 	Server &server;
+	void	capabilities(Client &client, std::vector<std::string> &v_buffer);
+	void	clean_buffer(std::string &buffer);
 
 public:
 	Parsing(Server &server);
 	~Parsing();
 
-	void	clean_buffer(std::string &buffer);
 	bool	init_parsing(Client &client, std::string &buffer);
-	void	capabilities(Client &client, std::string &buffer);
+	bool	check_params(Client &client, std::string &buffer);
 };
 
 #endif
