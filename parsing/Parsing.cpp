@@ -34,12 +34,11 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 {
 	std::vector<std::string>	v_buffer = ft_split(buffer);
 	clean_buffer(buffer);
-	if (check_params(client, buffer) == false)
-		return (true);
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 	if (v_buffer[0] == "CAP")
 		capabilities(client, v_buffer);
-	// if (buffer.find("CAP ls "))
+	else if(v_buffer[0] == "PASS")
+		pass(client, v_buffer);
 	//PASS
 	//NICK (check)
 	//USER
@@ -83,10 +82,8 @@ void	Parsing::capabilities(Client &client, std::vector<std::string> &v_buffer)
 	}
 }
 
-bool Parsing::check_params(Client &client, std::string &buffer)
+void	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 {
-	if (buffer.substr(0, 4) == "PASS "){
-		if (server.password_ != )
-	}
-	
+	if (isconnected() == true)
+		
 }
