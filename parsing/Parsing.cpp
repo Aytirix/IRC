@@ -39,10 +39,9 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 		capabilities(client, v_buffer);
 	else if(v_buffer[0] == "PASS")
 		return (pass(client, v_buffer));
-	//PASS
-	//NICK (check)
+	else if (v_buffer[0] == "NICK")
+		return nick(client, v_buffer);
 	//USER
-	// (void)buffer;
 	return (true);
 }
 
@@ -93,8 +92,6 @@ bool	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 		server.send_data(client.getSocketFd(), ERR_NEEDMOREPARAMS(client.getNickname()), true, false);
 	else if (client.IsConnected() == false)
 	{
-		client.setNickname("Nickname"); // a enlever
-		client.setUserName("Username"); // a enlever
 		if (Hasher::compare(v_buffer[1], server.password_) == true)
 			client.passwordVerified();
 		else {
@@ -104,4 +101,21 @@ bool	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 		}
 	}
 	return (true);
+}
+
+bool	Parsing::nick(Client &client, std::vector<std::string> &v_buffer)
+{
+	if (v_buffer.size() > 2)
+		server.send_data(client.getSocketFd(), ERR_NEEDMOREPARAMS(client.getNickname()), true, false);
+	else if (v_buffer.size() == 1) {
+		server.send_data(client.getSocketFd(), ERR_NONICKNAMEGIVEN, true, false);
+		return (false);
+	}
+	else if (std::string("0123456789!\"#$%&'()*+,./:;<=>?@ ~").find(v_buffer[1][0]) != std::string::npos
+			|| v_buffer[1].size() > 9)
+		server.send_data(client.getSocketFd(), ERR_ERRONEUSNICKNAME(client.getNickname()), true, false);
+	else if (v_buffer.size() == 2) {
+		client.setNickname(v_buffer[1]);
+	}
+	return (false);
 }

@@ -16,6 +16,8 @@
 #define ERR_ALREADY_REGISTERED(nickname) "462 " + nickname + " :You are already connected and cannot handshake again"
 /* ----------------------- MODE ----------------------- */
 /* ----------------------- NICK ----------------------- */
+#define ERR_NONICKNAMEGIVEN "431 * :No nickname given"
+#define ERR_ERRONEUSNICKNAME(nickname) "432 " + nickname + " :Erroneous nickname"
 /* ----------------------- TOPIC ----------------------- */
 /* ----------------------- CAPABILITY ----------------------- */
 #define ERR_PARAM(nickname, cap) "461 " + nickname + " " + cap + " :Not enough parameters" //moi
