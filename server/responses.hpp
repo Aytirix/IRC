@@ -18,6 +18,8 @@
 /* ----------------------- NICK ----------------------- */
 #define ERR_NONICKNAMEGIVEN "431 * :No nickname given"
 #define ERR_ERRONEUSNICKNAME(nickname) "432 " + nickname + " :Erroneous nickname"
+#define NICKNAME_CHANGED(unique_nickname, nickname) ":" + unique_nickname + " NICK :" + nickname
+
 /* ----------------------- TOPIC ----------------------- */
 /* ----------------------- CAPABILITY ----------------------- */
 #define ERR_PARAM(nickname, cap) "461 " + nickname + " " + cap + " :Not enough parameters" //moi

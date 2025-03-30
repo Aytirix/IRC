@@ -115,8 +115,8 @@ bool	Parsing::nick(Client &client, std::vector<std::string> &v_buffer)
 			|| v_buffer[1].size() > 9)
 		server.send_data(client.getSocketFd(), ERR_ERRONEUSNICKNAME(client.getNickname()), true, false);
 	else if (v_buffer.size() == 2) {
+		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), v_buffer[1]), true, false);
 		client.setNickname(v_buffer[1]);
-		server.send_data(client.getSocketFd(), client.getNickname(), true, false);
 	}
-	return (false);
+	return (true);
 }
