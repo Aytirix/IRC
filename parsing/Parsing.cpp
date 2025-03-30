@@ -40,7 +40,7 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	else if(v_buffer[0] == "PASS")
 		return (pass(client, v_buffer));
 	else if (v_buffer[0] == "NICK")
-		return nick(client, v_buffer);
+		nick(client, v_buffer);
 	//USER
 	return (true);
 }
@@ -103,20 +103,21 @@ bool	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 	return (true);
 }
 
-bool	Parsing::nick(Client &client, std::vector<std::string> &v_buffer)
+void	Parsing::nick(Client &client, std::vector<std::string> &v_buffer)
 {
 	if (v_buffer.size() > 2)
 		server.send_data(client.getSocketFd(), ERR_NEEDMOREPARAMS(client.getNickname()), true, false);
 	else if (v_buffer.size() == 1) {
 		server.send_data(client.getSocketFd(), ERR_NONICKNAMEGIVEN, true, false);
-		return (false);
 	}
 	else if (std::string("0123456789!\"#$%&'()*+,./:;<=>?@ ~").find(v_buffer[1][0]) != std::string::npos
 			|| v_buffer[1].size() > 9)
 		server.send_data(client.getSocketFd(), ERR_ERRONEUSNICKNAME(client.getNickname()), true, false);
 	else if (v_buffer.size() == 2) {
+		client.setUserName("irongab");
 		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), v_buffer[1]), true, false);
 		client.setNickname(v_buffer[1]);
+		server.send_data(client.getSocketFd(), "Welcome in IRC Channel", true, false);
+
 	}
-	return (true);
 }
