@@ -16,6 +16,7 @@ private:
 	std::string _ip;
 	std::string _realname;
 	std::string buffer;
+	bool password_verified;
 public:
 	Client();
     Client(pollfd socket_fd);
@@ -37,6 +38,8 @@ public:
 	void setUserName(const std::string &username) { this->_username = username; }
 	void setRealName(const std::string &realname) { this->_realname = realname; }
 	void setIp(const std::string &ip) { this->_ip = ip; }
+	bool IsConnected() const { return (password_verified && this->_nickName != "" && this->_username != "") ? true : false; }
+	void passwordVerified() { this->password_verified = true; };
 };
 
 #endif

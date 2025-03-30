@@ -84,6 +84,20 @@ void	Parsing::capabilities(Client &client, std::vector<std::string> &v_buffer)
 
 void	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 {
-	if (isconnected() == true)
-		
+	if (client.IsConnected() == true) {
+		server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()), true, false);
+	}
+	else if (v_buffer.size() == 1)
+		server.send_data(client.getSocketFd(), ERR_PASSWD_MISSING, true, false);
+	else if (v_buffer.size() > 2)
+		server.send_data(client.getSocketFd(), ERR_NEEDMOREPARAMS(client.getNickname()), true, false);
+	else if (client.IsConnected() == false)
+	{
+		client.setNickname("Nickname"); // a enlever
+		client.setUserName("Username"); // a enlever
+		if (Hasher::compare(v_buffer[0], server.password_))
+			client.passwordVerified();
+		else
+			server.send_data(client.getSocketFd(), ERR_PASSWD_MISMATCH, true, false);
+	}
 }
