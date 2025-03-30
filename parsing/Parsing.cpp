@@ -38,7 +38,7 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	if (v_buffer[0] == "CAP")
 		capabilities(client, v_buffer);
 	else if(v_buffer[0] == "PASS")
-		pass(client, v_buffer);
+		return (pass(client, v_buffer));
 	//PASS
 	//NICK (check)
 	//USER
@@ -82,7 +82,7 @@ void	Parsing::capabilities(Client &client, std::vector<std::string> &v_buffer)
 	}
 }
 
-void	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
+bool	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 {
 	if (client.IsConnected() == true) {
 		server.send_data(client.getSocketFd(), ERR_ALREADY_REGISTERED(client.getNickname()), true, false);
@@ -95,9 +95,13 @@ void	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 	{
 		client.setNickname("Nickname"); // a enlever
 		client.setUserName("Username"); // a enlever
-		if (Hasher::compare(v_buffer[0], server.password_))
+		if (Hasher::compare(v_buffer[1], server.password_) == true)
 			client.passwordVerified();
-		else
+		else {
 			server.send_data(client.getSocketFd(), ERR_PASSWD_MISMATCH, true, false);
+			server.DisconnectClient(client);
+			return (false);
+		}
 	}
+	return (true);
 }

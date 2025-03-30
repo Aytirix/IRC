@@ -21,7 +21,7 @@ private:
 	Server &server;
 	void	capabilities(Client &client, std::vector<std::string> &v_buffer);
 	void	clean_buffer(std::string &buffer);
-	void	pass(Client &client, std::vector<std::string> &v_buffer);
+	bool	pass(Client &client, std::vector<std::string> &v_buffer);
 
 public:
 	Parsing(Server &server);
