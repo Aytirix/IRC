@@ -22,7 +22,6 @@ public:
     Client(pollfd socket_fd);
     ~Client();
 
-    // Getters
     int getSocketFd() const { return this->pfd.fd; }
 	std::string &getBuffer() { return this->buffer; }
 	std::string getUniqueName() const { return this->_username + "!" + this->_username + "@" + this->_ip; }

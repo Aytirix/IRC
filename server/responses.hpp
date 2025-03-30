@@ -9,7 +9,7 @@
 /* --------- MSG PRIVE ------ */
 /* --------- PING ----------- */
 /* ----------------------- CONNEXION ----------------------- */
-#define WELCOME(nickname) "Bienvenue " + nickname + " sur le serveur 42Project !"
+#define WELCOME(nickname) "001 "+ nickname +" :Bienvenue "+ nickname +" sur le serveur 42Project !"
 #define ERR_PASSWD_MISMATCH "464 :Password incorrect"
 #define ERR_PASSWD_MISSING "461 :Password required"
 #define ERR_NEEDMOREPARAMS(nickname) "461 " + nickname + " PASS :Not enough parameters"
