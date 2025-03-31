@@ -7,7 +7,6 @@
 #define NOT_ENOUGH_PARAMS(nickname, cmd) "461 " + nickname + " " + cmd + " :Not enough parameters"
 
 
-/* --------- INVITE --------- */
 
 
 
@@ -36,13 +35,19 @@
 /* --------- MSG PRIVE ------ */
 #define PRIV_MSG(unique_nickname, target, message) ":" + unique_nickname + " PRIVMSG " + target + " :" + message
 #define PRIV_MSG_NO_RECIPIENT(nickname) "411 " +  nickname + " :No recipient given (PRIVMSG)"
-
+/* --------- INVITE --------- */
+#define INVITE_NO_SUCH(nickname, target) "401 " + nickname + " " + target + " :No such nick/channel"
+#define INVITE_TO_TARGET(unique_nickname, target, channel) ":" + unique_nickname + " INVITE " + target + " :" + channel
+#define INVITE_CALLBACK(nickname, target, channel) "341 " + nickname + " " + target + " " + channel
+#define ERR_USER_ON_CHANNEL(nickname, target, channel) "443 " + nickname + " " + target + " " + channel + " :is already on channel"
+#define ERR_INVITE_ONLY(nickname, channel) "473 " + nickname + " " + channel + " :Cannot join channel (+i)"
 /* ----------------------- CONNEXION ----------------------- */
 #define WELCOME(nickname) "001 "+ nickname +" :Bienvenue "+ nickname +" sur le serveur 42Project !"
 #define ERR_PASSWD_MISMATCH "464 :Password incorrect"
 #define ERR_PASSWD_MISSING "461 :Password required"
 #define ERR_ALREADY_REGISTERED(nickname) "462 " + nickname + " :You are already connected and cannot handshake again"
-
+/* ----------------------- LIMIT ----------------------- */
+#define ERR_CHANNELISFULL(nickname, channel) "471 " + nickname + " " + channel + " :Cannot join channel (+l)"
 
 /* ----------------------- MODE ----------------------- */
 #define ALL_MODES(channel) "MODE " + channel + " +itkol"

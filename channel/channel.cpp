@@ -17,6 +17,10 @@
 Channel::Channel(Server &server, std::string &name, Client &client) : _server(server), _name(name), _topic("")
 {
 	addClient(client, true);
+	password = "";
+	limit = 0;
+	restrict_topic = false;
+	join_only_invite = false;
 }
 
 Channel::~Channel() {}
@@ -31,16 +35,28 @@ Channel::~Channel() {}
  **/
 void Channel::addClient(Client client, bool _operator)
 {
-	if (_clients.find(client.getSocketFd()) != _clients.end())
+	// Si le channel est sur invite seulement
+	if (join_only_invite && _clients.size() > 0)
 	{
-		_clients[client.getSocketFd()]._connected = true;
+		if (_clients.find(client.getSocketFd()) == _clients.end())
+			return _server.send_data(client.getSocketFd(), ERR_INVITE_ONLY(client.getNickname(), _name));
 	}
-	else
+
+	// Si la limite est atteinte
+	if (limit > 0 && this->getClientCount() >= limit)
+	{
+		if (_clients.find(client.getSocketFd()) == _clients.end())
+			return _server.send_data(client.getSocketFd(), ERR_CHANNELISFULL(client.getNickname(), _name));
+	}
+
+	Client_channel client_it = _clients[client.getSocketFd()];
+	if (_clients.find(client.getSocketFd()) == _clients.end())
 	{
 		_clients[client.getSocketFd()]._client = client;
-		_clients[client.getSocketFd()]._connected = true;
 		_clients[client.getSocketFd()]._operator = _operator;
 	}
+	_clients[client.getSocketFd()]._connected = true;
+	_clients[client.getSocketFd()]._invited = false;
 	this->broadcastMessage(client, USER_JOIN_CHANNEL(client.getUniqueName(), _name));
 	_server.send_data(client.getSocketFd(), USER_JOIN_CHANNEL(client.getUniqueName(), _name), false, true);
 	if (_topic.size())
@@ -88,6 +104,8 @@ bool Channel::disconnectClientChannel(Client &client)
 	if (_clients.find(client.getSocketFd()) == _clients.end())
 		return false;
 	_clients[client.getSocketFd()]._connected = false;
+	_clients[client.getSocketFd()]._operator = false;
+	_clients[client.getSocketFd()]._invited = false;
 	return true;
 }
 
@@ -195,4 +213,51 @@ void Channel::setTopic(Client &client, std::string &topic)
 		return _server.send_data(client.getSocketFd(), NOT_OPERATOR(client.getUniqueName(), _name));
 	this->_topic = topic;
 	this->broadcastMessage(SET_TOPIC(client.getUniqueName(), _name, topic));
+}
+
+
+/**
+ * @brief Récupère le nombre de clients connectés au canal.
+**/
+int Channel::getClientCount()
+{
+	int count = 0;
+	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		if (it->second._connected)
+			count++;
+	}
+	return count;
+}
+
+
+/** 
+ * @brief Envoie une invitation à un client pour rejoindre le canal.
+ *  
+ * Cette fonction envoie une invitation à un client cible pour rejoindre le canal.
+ * Si le client qui envoie l'invitation n'est pas dans le canal, ou s'il n'est pas
+ * un opérateur, ou si le client cible est déjà dans le canal, un message d'erreur
+ * est envoyé. Sinon, un message d'invitation est envoyé au client cible.
+ *
+ * @param client Le client qui envoie l'invitation.
+ * @param target Le client cible qui reçoit l'invitation.
+**/
+void Channel::sendInvite(Client &client, Client &target)
+{
+	// Si le client n'est pas dans le channel
+	Client_channel client_it = _clients[client.getSocketFd()];
+	Client_channel target_it = _clients[target.getSocketFd()];
+	if (client_it._connected == false)
+		return _server.send_data(client.getSocketFd(), USER_NOT_IN_CHANNEL(client.getNickname(), _name));
+
+	// Si le client n'est pas un opérateur
+	if (client_it._operator == false)
+		return _server.send_data(client.getSocketFd(), NOT_OPERATOR(client.getUniqueName(), _name));
+	
+	// Si le target est déjà dans le channel
+	if (target_it._connected == true)
+		return _server.send_data(client.getSocketFd(), ERR_USER_ON_CHANNEL(client.getNickname(), target.getNickname(), _name));
+	
+	_server.send_data(client.getSocketFd(), INVITE_CALLBACK(client.getNickname(), target.getNickname(), _name));
+	_server.send_data(target.getSocketFd(), INVITE_TO_TARGET(client.getUniqueName(), target.getNickname(), _name), false);
 }

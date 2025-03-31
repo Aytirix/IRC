@@ -92,6 +92,7 @@ bool Parsing::check_enough_params(Client &client, std::string &command, std::str
 	params["PASS"] = 1;
 	params["KICK"] = 2;
 	params["TOPIC"] = 1;
+	params["INVITE"] = 2;
 
 	std::map<std::string, std::size_t>::iterator it = params.find(command);
 	if (it == params.end())
@@ -133,7 +134,7 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 
 	// Commande a executer quand l'utilisateur est connecté ou pas
 	if (command == "CAP")
-		capability(client, args);
+		CMD_CAP(client, args);
 	else if (command == "USER")
 		return CMD_USER(client, args);
 	else if (command == "PASS")
@@ -147,17 +148,19 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 		if (command == "MODE")
 			server.send_data(client.getSocketFd(), ALL_MODES(command));
 		else if (command == "JOIN")
-			this->joinChannel(client, args);
+			this->CMD_JOIN(client, args);
 		else if (buffer.substr(0, 3) == "WHO")
-			this->Who(client, args);
+			this->CMD_WHO(client, args);
 		else if (command == "PART")
-			this->partChannel(client, args);
+			this->CMD_PART(client, args);
 		else if (command == "PRIVMSG")
-			this->PRIVMSG(client, args);
+			this->CMD_PRIVMSG(client, args);
 		else if (command == "KICK")
 			this->CMD_KICK(client, args);
 		else if (command == "TOPIC")
 			this->CMD_TOPIC(client, args);
+		else if (command == "INVITE")
+			this->CMD_INVITE(client, args);
 		else
 			server.send_data(client.getSocketFd(), ERR_UNKNOWNCOMMAND(client.getNickname(), buffer.substr(0, buffer.find(" "))));
 	}
@@ -167,12 +170,12 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 }
 
 /**
- * @brief Gère la commande WHO
+ * @brief CMD_WHO
  * Cette commande permet de lister les utilisateurs d'un channel
  * @param client : le client qui a envoyé la commande
  * @param buffer : la commande à parser
  **/
-void Parsing::Who(Client &client, std::string &channel)
+void Parsing::CMD_WHO(Client &client, std::string &channel)
 {
 	std::map<std::string, Channel>::iterator it = server._channels.find(channel);
 	if (it == server._channels.end())
@@ -194,7 +197,7 @@ void Parsing::Who(Client &client, std::string &channel)
  * @param channelName : le nom du channel
  * @param message : le message à envoyer
  **/
-void Parsing::partChannel(Client &client, std::string &args)
+void Parsing::CMD_PART(Client &client, std::string &args)
 {
 	std::string channelName = args.substr(0, args.find(" "));
 	size_t colon_pos = args.find(":");
@@ -213,6 +216,11 @@ void Parsing::partChannel(Client &client, std::string &args)
 			if (it->second.disconnectClientChannel(client) == false)
 				break;
 			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), channelName, message));
+			if (it->second.getClientCount() == 0)
+			{
+				log::log::write(log::log::INFO, "Suppression du channel : " + it->first);
+				server._channels.erase(it);
+			}
 			return;
 		}
 	}
@@ -225,7 +233,7 @@ void Parsing::partChannel(Client &client, std::string &args)
  * @param client : le client qui a envoyé la commande
  * @param channelName : le nom du channel
  **/
-void Parsing::joinChannel(Client &client, std::string &channelName)
+void Parsing::CMD_JOIN(Client &client, std::string &channelName)
 {
 	if (channelName[0] != '#')
 	{
@@ -235,7 +243,6 @@ void Parsing::joinChannel(Client &client, std::string &channelName)
 	std::map<std::string, Channel>::iterator it = server._channels.find(channelName);
 	if (it == server._channels.end())
 	{
-		log::write(log::DEBUG, "Parsing::CMD_KICK channelName : '" + channelName + "'");
 		Channel channel(server, channelName, client);
 		server._channels.insert(std::make_pair(channelName, channel));
 	}
@@ -265,7 +272,7 @@ void Parsing::CMD_KICK(Client &client, std::string &args)
 }
 
 /**
- * @brief Gère la commande TOPIC
+ * @brief CMD_TOPIC
  * Cette commande permet de changer le topic d'un channel
  * @param client : le client qui a envoyé la commande
  * @param args : les arguments de la commande
@@ -286,14 +293,52 @@ void Parsing::CMD_TOPIC(Client &client, std::string &args)
 }
 
 /**
- * @brief capability
+ * @brief CMD_INVITE
+ * Cette commande permet d'inviter un client à rejoindre un channel
+ * @param client : le client qui a envoyé la commande
+ * @param args : les arguments de la commande
+ **/
+void Parsing::CMD_INVITE(Client &client, std::string &args)
+{
+	std::string channelName = args.substr(args.find(" ") + 1, args.size() - args.find(" ") - 1);
+	std::string clientInvite = args.substr(0, args.find(" "));
+	log::write(log::DEBUG, "Channel : '" + channelName + "'");
+	log::write(log::DEBUG, "Invite : '" + clientInvite + "'");
+	if (channelName[0] != '#')
+		return server.send_data(client.getSocketFd(), ERR_NOSUCH_CHANNEL(client.getNickname(), channelName));
+
+	// Recherche le channel
+	std::map<std::string, Channel>::iterator it_channel = server._channels.find(channelName);
+	if (it_channel == server._channels.end())
+		return server.send_data(client.getSocketFd(), ERR_NOSUCH_CHANNEL(client.getNickname(), channelName));
+
+	// Recherche le client à inviter
+	std::map<int, Client>::iterator it_client = server._clients.begin();
+	for (; it_client != server._clients.end(); ++it_client)
+	{
+		if (it_client->second.getNickname() == clientInvite)
+			break;
+	}
+
+	// Si le client n'est pas trouvé
+	if (it_client == server._clients.end())
+	{
+		server.send_data(client.getSocketFd(), INVITE_NO_SUCH(client.getNickname(), clientInvite));
+		return;
+	}
+
+	it_channel->second.sendInvite(client, it_client->second);
+}
+
+/**
+ * @brief CMD_CAP
  * Gère les commandes CAP
  * Si une commande CAP LS 302 est reçue, on envoie la liste des capabilities
  * Si une commande CAP REQ est reçue, on vérifie que les capabilities demandées sont bien supportées
  * @param client : le client qui a envoyé la commande
  * @param args : la commande à parser
  **/
-void Parsing::capability(Client &client, std::string &args)
+void Parsing::CMD_CAP(Client &client, std::string &args)
 {
 	std::string caps = "chghost";
 	if (args == "LS 302")
@@ -316,7 +361,7 @@ void Parsing::capability(Client &client, std::string &args)
 }
 
 /**
- * @brief PRIVMSG
+ * @brief CMD_PRIVMSG
  * Gère les messages privés
  * Si le message est pour un channel, on l'envoie à tous les clients du channel, sauf au client qui l'a envoyé
  * Si le message privé est pour le chatbot, on lui envoie la reponse de l'api
@@ -324,7 +369,7 @@ void Parsing::capability(Client &client, std::string &args)
  * @param client : le client qui a envoyé le message
  * @param buffer : le message à parser
  **/
-void Parsing::PRIVMSG(Client &client, std::string &args)
+void Parsing::CMD_PRIVMSG(Client &client, std::string &args)
 {
 	// Si pour le message on ne trouve pas de : et qu'il y a pas au moins un caractere après le :
 	if (args.find(" :") == std::string::npos || args.find(":") == args.size() - 1)
@@ -493,8 +538,8 @@ void Parsing::CMD_NICK(Client &client, std::string &nickname)
 	// Si le client n'a pas encore de pseudo, on lui envoie un message de bienvenue
 	if (tmp.size() == 0)
 	{
-		std::string str = client.getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
-		PRIVMSG(*server._chatbot, str);
+		// std::string str = client.getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
+		// CMD_PRIVMSG(*server._chatbot, str);
 		server.send_data(client.getSocketFd(), WELCOME(client.getNickname()), true, false);
 	}
 }

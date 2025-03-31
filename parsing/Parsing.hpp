@@ -17,16 +17,17 @@ class Parsing
 private:
 	Server &server;
 
-	void capability(Client &client, std::string &args);
+	void CMD_CAP(Client &client, std::string &args);
 	bool check_enough_params(Client &client, std::string &command, std::string &args);
 
 	// CHANNEL
-	void Who(Client &client, std::string &channel);
-	void joinChannel(Client &client, std::string &channelName);
-	void partChannel(Client &client, std::string &args);
-	void PRIVMSG(Client &client, std::string &args);
+	void CMD_WHO(Client &client, std::string &channel);
+	void CMD_JOIN(Client &client, std::string &channelName);
+	void CMD_PART(Client &client, std::string &args);
+	void CMD_PRIVMSG(Client &client, std::string &args);
 	void CMD_KICK(Client &client, std::string &args);
 	void CMD_TOPIC(Client &client, std::string &args);
+	void CMD_INVITE(Client &client, std::string &args);
 
 	// CLIENT
 	bool CMD_PASS(Client &client, std::string &password);

@@ -179,7 +179,14 @@ void Server::DisconnectClient(Client &client)
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		if (it->second.disconnectClientChannel(client))
+		{
 			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, "Leaving"));
+			if (it->second.getClientCount() == 0)
+			{
+				log::log::write(log::log::INFO, "Suppression du channel : " + it->first);
+				_channels.erase(it);
+			}
+		}
 	}
 	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
 	close(client.getSocketFd());
