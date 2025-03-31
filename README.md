@@ -6,7 +6,6 @@ Ce projet consiste à créer un serveur IRC (Internet Relay Chat). Vous pouvez t
 
 ## Diagramme
 Dans la branche de theo il manque a impleter :
-- INVITE
 - MODE : -i / -t / -k / -o / -l
 
 ## Diagramme
