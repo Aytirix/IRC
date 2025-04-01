@@ -37,8 +37,10 @@ bool Parsing::init_parsing(Client &client, std::string &buffer)
 	log::write(log::RECEIVED, "fd (" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 	if (v_buffer[0] == "CAP")
 		capabilities(client, v_buffer);
-	else if(v_buffer[0] == "PASS")
+	else if (v_buffer[0] == "PASS")
 		return (pass(client, v_buffer));
+	else if (v_buffer[0] == "USER")
+			user(client, v_buffer);
 	else if (v_buffer[0] == "NICK")
 		nick(client, v_buffer);
 	//USER
@@ -105,6 +107,8 @@ bool	Parsing::pass(Client &client, std::vector<std::string> &v_buffer)
 
 void	Parsing::nick(Client &client, std::vector<std::string> &v_buffer)
 {
+
+	//nickname tolower / si il existe / 
 	if (v_buffer.size() > 2)
 		server.send_data(client.getSocketFd(), ERR_NEEDMOREPARAMS(client.getNickname()), true, false);
 	else if (v_buffer.size() == 1) {
@@ -114,8 +118,16 @@ void	Parsing::nick(Client &client, std::vector<std::string> &v_buffer)
 			|| v_buffer[1].size() > 9)
 		server.send_data(client.getSocketFd(), ERR_ERRONEUSNICKNAME(client.getNickname()), true, false);
 	else if (v_buffer.size() == 2) {
+		// ne pas oubier de verrifier si le username est enregistrer .
 		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), v_buffer[1]), true, false);
 		server.send_data(client.getSocketFd(), WELCOME(v_buffer[1]), true, false);
 		client.setNickname(v_buffer[1]);
 	}
 }
+void	Parsing::user(Client &client, std::vector<std::string> &v_buffer)
+{
+	client.setUserName(v_buffer[1]);
+	if (client.IsConnected() == true)
+		server.send_data(client.getSocketFd(), ERR_ALREADY_CONNECTED(v_buffer[1]), true, false);
+}
+

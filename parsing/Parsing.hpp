@@ -23,7 +23,7 @@ private:
 	void	clean_buffer(std::string &buffer);
 	bool	pass(Client &client, std::vector<std::string> &v_buffer);
 	void	nick(Client &client, std::vector<std::string> &v_buffer);
-
+	void	user(Client &client, std::vector<std::string> &v_buffer);
 public:
 	Parsing(Server &server);
 	~Parsing();

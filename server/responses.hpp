@@ -14,11 +14,14 @@
 #define ERR_PASSWD_MISSING "461 :Password required"
 #define ERR_NEEDMOREPARAMS(nickname) "461 " + nickname + " PASS :Not enough parameters"
 #define ERR_ALREADY_REGISTERED(nickname) "462 " + nickname + " :You are already connected and cannot handshake again"
+/*-------------------------USER-------------------------*/
+#define ERR_ALREADY_CONNECTED(nickname) "462 " + nickname + " :You are already connected and cannot handshake again"
+
 /* ----------------------- MODE ----------------------- */
 /* ----------------------- NICK ----------------------- */
 #define ERR_NONICKNAMEGIVEN "431 * :No nickname given"
 #define ERR_ERRONEUSNICKNAME(nickname) "432 " + nickname + " :Erroneous nickname"
-#define NICKNAME_CHANGED(unique_nickname, nickname) ":" + unique_nickname + " NICK :" + nickname
+#define NICKNAME_CHANGED(unique_nickname, nickname) ":gacavali!gacavali" + unique_nickname + " NICK :" + nickname
 
 /* ----------------------- TOPIC ----------------------- */
 /* ----------------------- CAPABILITY ----------------------- */
