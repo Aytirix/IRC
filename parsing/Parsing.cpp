@@ -119,8 +119,10 @@ void	Parsing::nick(Client &client, std::vector<std::string> &v_buffer)
 		server.send_data(client.getSocketFd(), ERR_ERRONEUSNICKNAME(client.getNickname()), true, false);
 	else if (v_buffer.size() == 2) {
 		// ne pas oubier de verrifier si le username est enregistrer .
-		server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), v_buffer[1]), true, false);
-		server.send_data(client.getSocketFd(), WELCOME(v_buffer[1]), true, false);
+		if (!client.getUserName().empty()) {
+			server.send_data(client.getSocketFd(), NICKNAME_CHANGED(client.getUniqueName(), v_buffer[1]), true, false);
+			server.send_data(client.getSocketFd(), WELCOME(v_buffer[1]), true, false);
+		}
 		client.setNickname(v_buffer[1]);
 	}
 }

@@ -24,7 +24,7 @@ public:
 
     int getSocketFd() const { return this->pfd.fd; }
 	std::string &getBuffer() { return this->buffer; }
-	std::string getUniqueName() const { return this->_username + "!" + this->_username + "@" + this->_ip; }
+	std::string getUniqueName() const { return this->_username + "!~" + this->_username + "@" + this->_ip; }
 	std::string getUserName() const { return this->_username; }
     pollfd getSocketPfd() const { return this->pfd; }
     std::string getNickname() const { return this->_nickName; }

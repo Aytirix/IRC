@@ -21,7 +21,7 @@
 /* ----------------------- NICK ----------------------- */
 #define ERR_NONICKNAMEGIVEN "431 * :No nickname given"
 #define ERR_ERRONEUSNICKNAME(nickname) "432 " + nickname + " :Erroneous nickname"
-#define NICKNAME_CHANGED(unique_nickname, nickname) ":gacavali!gacavali" + unique_nickname + " NICK :" + nickname
+#define NICKNAME_CHANGED(unique_nickname, nickname) unique_nickname + " NICK " + nickname
 
 /* ----------------------- TOPIC ----------------------- */
 /* ----------------------- CAPABILITY ----------------------- */
@@ -30,3 +30,4 @@
 #define CAP_VALID(nickname, cap) "CAP " + nickname + " ACK :" + cap
 
 #endif
+
