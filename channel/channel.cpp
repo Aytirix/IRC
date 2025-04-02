@@ -95,10 +95,15 @@ void Channel::removeOperator(Client_channel &client)
  * @param client L'objet Client à supprimer du canal.
  * @return true si le client a été supprimé avec succès, false sinon.
  **/
-bool Channel::disconnectClientChannel(Client *client)
+bool Channel::disconnectClientChannel(Client *client, bool delete_client)
 {
 	if (_clients.find(client->getSocketFd()) == _clients.end())
 		return false;
+	if (delete_client == true)
+	{
+		_clients.erase(client->getSocketFd());
+		return true;
+	}
 	_clients[client->getSocketFd()]._connected = false;
 	_clients[client->getSocketFd()]._operator = false;
 	_clients[client->getSocketFd()]._invited = false;
@@ -121,7 +126,7 @@ std::string Channel::getAllClientsString()
 	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
 		if (it->second._connected == false)
-		continue;
+			continue;
 		if (it->second._operator)
 			clients += "@" + it->second._client->getNickname() + " ";
 		else

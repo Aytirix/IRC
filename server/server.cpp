@@ -178,7 +178,7 @@ void Server::DisconnectClient(Client *client)
 	// parcourir les channels et supprimer le client
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
-		if (it->second.disconnectClientChannel(client))
+		if (it->second.disconnectClientChannel(client, true))
 		{
 			it->second.broadcastMessage(LEAVE_CHANNEL(client->getUniqueName(), it->first, "Leaving"));
 			if (it->second.getClientCount() == 0)
@@ -205,7 +205,7 @@ void Server::DisconnectClient(Client *client, std::string message)
 		message.erase(0, 1);
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
-		if (it->second.disconnectClientChannel(client))
+		if (it->second.disconnectClientChannel(client, true))
 			it->second.broadcastMessage(LEAVE_CHANNEL(client->getUniqueName(), it->first, message));
 	}
 	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client->getSocketFd()) + ")");
@@ -279,7 +279,7 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 		data.insert(0, "@time=" + time + " ");
 	}
 
-	log::write(log::SENT, "fd("+ log::toString(client_fd) + ") : '" + data + "'");
+	log::write(log::SENT, "fd(" + log::toString(client_fd) + ") : '" + data + "'");
 
 	if (data.size() == 0 || data[data.size() - 1] != '\n')
 		data += '\n';

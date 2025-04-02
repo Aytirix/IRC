@@ -40,7 +40,7 @@ public:
 
 	// Methods
 	void addClient(Client *client, bool _operator = false);
-	bool disconnectClientChannel(Client *client);
+	bool disconnectClientChannel(Client *client, bool delete_client = false);
 	void broadcastMessage(std::string message);
 	void broadcastMessage(Client *client, std::string message);
 	void addOperator(Client_channel &client);
