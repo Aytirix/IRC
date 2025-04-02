@@ -93,6 +93,7 @@ bool Parsing::check_enough_params(Client *client, std::string &command, std::str
 	params["KICK"] = 2;
 	params["TOPIC"] = 1;
 	params["INVITE"] = 2;
+	params["PING"] = 1;
 
 	std::map<std::string, std::size_t>::iterator it = params.find(command);
 	if (it == params.end())
@@ -163,6 +164,11 @@ bool Parsing::init_parsing(Client *client, std::string &buffer)
 			this->CMD_INVITE(client, args);
 		else if (command == "LIST")
 			this->CMD_LIST(client, args);
+		else if (command == "PING")
+			{
+				server.send_data(client->getSocketFd(), PONG(client->getNickname(), args));
+				return true;
+			}
 		else
 			server.send_data(client->getSocketFd(), ERR_UNKNOWNCOMMAND(client->getNickname(), buffer.substr(0, buffer.find(" "))));
 	}

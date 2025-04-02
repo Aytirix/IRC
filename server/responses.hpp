@@ -76,5 +76,5 @@
 /* ----------------------- OTHER ----------------------- */
 #define ERR_NOTREGISTERED() "451 * :You have not registered"
 #define ERR_UNKNOWNCOMMAND(nickname, cmd) "421 " + nickname + " " + cmd + " :Unknown command"
-
+#define PONG(nickname, args) "PONG " + nickname + " " + SERVER_NAME + ":" + args
 #endif
