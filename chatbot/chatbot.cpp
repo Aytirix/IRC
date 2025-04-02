@@ -37,10 +37,10 @@ Chatbot::Chatbot(Server &server) : Client(), server(server)
 	this->setIp("localhost");
 }
 
-std::vector<Message> &Chatbot::operator[](Client &client)
+std::vector<Message> &Chatbot::operator[](Client *client)
 {
-	int socketFd = client.getSocketFd();
-	std::map<int, std::vector<Message> >::iterator it = _clients.find(client.getSocketFd());
+	int socketFd = client->getSocketFd();
+	std::map<int, std::vector<Message> >::iterator it = _clients.find(client->getSocketFd());
 
 	if (it != _clients.end())
 		return it->second;
@@ -79,7 +79,7 @@ Chatbot::~Chatbot()
  * @param userInput Chaîne de caractères contenant le message de l'utilisateur.
  * @return std::string La réponse de l'assistant.
  **/
-std::string Chatbot::sendMessage(Client &client, const std::string &userInput)
+std::string Chatbot::sendMessage(Client *client, const std::string &userInput)
 {
 	// Ajouter le message utilisateur à la conversation
 	Message userMsg;
@@ -295,9 +295,9 @@ void Chatbot::trimConversation(std::vector<Message> &conversation)
  * @param client Référence vers l'objet Client à ajouter.
  * @return true si le client a été ajouté avec succès, false si le client est déjà présent.
  */
-bool Chatbot::addClient(Client &client)
+bool Chatbot::addClient(Client *client)
 {
-	int key = client.getSocketFd();
+	int key = client->getSocketFd();
 	if (_clients.find(key) == _clients.end())
 	{
 		_clients[key] = std::vector<Message>();
@@ -320,9 +320,9 @@ bool Chatbot::addClient(Client &client)
  * @param client Référence vers l'objet Client à supprimer.
  * @return true si le client a été supprimé avec succès, false si le client n'est pas trouvé.
  */
-bool Chatbot::deleteClient(Client &client)
+bool Chatbot::deleteClient(Client *client)
 {
-	int clientId = client.getSocketFd();
+	int clientId = client->getSocketFd();
 	if (_clients.find(clientId) != _clients.end())
 	{
 		_clients.erase(clientId);

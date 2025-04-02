@@ -41,6 +41,11 @@
 #define INVITE_CALLBACK(nickname, target, channel) "341 " + nickname + " " + target + " " + channel
 #define ERR_USER_ON_CHANNEL(nickname, target, channel) "443 " + nickname + " " + target + " " + channel + " :is already on channel"
 #define ERR_INVITE_ONLY(nickname, channel) "473 " + nickname + " " + channel + " :Cannot join channel (+i)"
+/* --------- LIST --------- */
+#define LIST_START(nickname) "321 " + nickname + " Channel :Users  Name"
+#define LIST_CHANNEL(nickname, channel, user_connected, topic) "322 " + nickname + " " + channel + " " + user_connected + " :" + topic
+#define END_OF_LIST(nickname) "323 " + nickname + " :End of /LIST"
+
 /* ----------------------- CONNEXION ----------------------- */
 #define WELCOME(nickname) "001 "+ nickname +" :Bienvenue "+ nickname +" sur le serveur 42Project !"
 #define ERR_PASSWD_MISMATCH "464 :Password incorrect"
@@ -67,7 +72,6 @@
 #define CAP_LIST(list) "CAP * LS :" + list
 #define ERR_CAP_INVALID(nickname, cap) "CAP " + nickname + " NAK :" + cap
 #define CAP_VALID(nickname, cap) "CAP " + nickname + " ACK :" + cap
-
 
 /* ----------------------- OTHER ----------------------- */
 #define ERR_NOTREGISTERED() "451 * :You have not registered"

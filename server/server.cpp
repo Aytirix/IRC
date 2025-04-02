@@ -165,7 +165,7 @@ void Server::handleNewConnection()
 	client_pfd.events = POLLIN;
 	Client client(client_pfd, inet_ntoa(client_addr.sin_addr));
 	_clients.insert(std::make_pair(client_fd, client));
-	_chatbot->addClient(client);
+	_chatbot->addClient(&client);
 	log::write(log::INFO, "Nouvelle connexion : fd(" + log::toString(client_fd) + ")");
 }
 
@@ -173,14 +173,14 @@ void Server::handleNewConnection()
  * @brief Déconnexion d'un client
  * @param client : le client à déconnecter
  **/
-void Server::DisconnectClient(Client &client)
+void Server::DisconnectClient(Client *client)
 {
 	// parcourir les channels et supprimer le client
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		if (it->second.disconnectClientChannel(client))
 		{
-			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, "Leaving"));
+			it->second.broadcastMessage(LEAVE_CHANNEL(client->getUniqueName(), it->first, "Leaving"));
 			if (it->second.getClientCount() == 0)
 			{
 				log::log::write(log::log::INFO, "Suppression du channel : " + it->first);
@@ -188,10 +188,10 @@ void Server::DisconnectClient(Client &client)
 			}
 		}
 	}
-	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
-	close(client.getSocketFd());
+	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client->getSocketFd()) + ")");
+	close(client->getSocketFd());
 	_chatbot->deleteClient(client);
-	_clients.erase(client.getSocketFd());
+	_clients.erase(client->getSocketFd());
 }
 
 /**
@@ -199,18 +199,18 @@ void Server::DisconnectClient(Client &client)
  * @param client : le client à déconnecter
  * @param message : le message à envoyer au client avant de le déconnecter
  **/
-void Server::DisconnectClient(Client &client, std::string message)
+void Server::DisconnectClient(Client *client, std::string message)
 {
 	if (message[0] == ':')
 		message.erase(0, 1);
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		if (it->second.disconnectClientChannel(client))
-			it->second.broadcastMessage(LEAVE_CHANNEL(client.getUniqueName(), it->first, message));
+			it->second.broadcastMessage(LEAVE_CHANNEL(client->getUniqueName(), it->first, message));
 	}
-	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client.getSocketFd()) + ")");
-	close(client.getSocketFd());
-	_clients.erase(client.getSocketFd());
+	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client->getSocketFd()) + ")");
+	close(client->getSocketFd());
+	_clients.erase(client->getSocketFd());
 }
 
 /**
@@ -229,7 +229,7 @@ void Server::handleClientData(int client_fd)
 	{
 		if (n < 0)
 			perror("read");
-		this->DisconnectClient(_clients[client_fd]);
+		this->DisconnectClient(&_clients[client_fd]);
 		return;
 	}
 	tempBuffer[n] = '\0';
@@ -252,11 +252,11 @@ void Server::handleClientData(int client_fd)
 		std::string command = buffer.substr(0, pos);
 		buffer.erase(0, pos + 1);
 		Parsing parsing(*this);
-		if (parsing.init_parsing(client, command) == false)
+		if (parsing.init_parsing(&client, command) == false)
 		{
 			// verifier que le client a bien été supprimé
 			if (_clients.find(client_fd) != _clients.end())
-				DisconnectClient(client);
+				DisconnectClient(&client);
 			return;
 		}
 	}
@@ -297,7 +297,7 @@ void Server::send_data(int client_fd, std::string data, bool server_name, bool d
 		else
 		{
 			perror("write");
-			DisconnectClient(client);
+			DisconnectClient(&client);
 		}
 	}
 	else

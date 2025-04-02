@@ -30,9 +30,9 @@ public:
 	~Chatbot();
 
 	// Envoie un message utilisateur et retourne la réponse de l'assistant
-	std::string sendMessage(Client &client, const std::string &userInput);
-	bool addClient(Client &client);
-	bool deleteClient(Client &client);
+	std::string sendMessage(Client *client, const std::string &userInput);
+	bool addClient(Client *client);
+	bool deleteClient(Client *client);
 
 private:
 	Server &server;
@@ -58,7 +58,7 @@ private:
 	// Supprime les messages les plus anciens pour limiter la taille de la conversation
 	void trimConversation(std::vector<Message> &conversation);
 
-	std::vector<Message> &operator[](Client &client);
+	std::vector<Message> &operator[](Client *client);
 };
 
 #endif
