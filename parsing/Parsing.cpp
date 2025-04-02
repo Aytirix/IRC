@@ -321,8 +321,6 @@ void Parsing::CMD_INVITE(Client *client, std::string &args)
 {
 	std::string channelName = args.substr(args.find(" ") + 1, args.size() - args.find(" ") - 1);
 	std::string clientInvite = args.substr(0, args.find(" "));
-	log::write(log::DEBUG, "Channel : '" + channelName + "'");
-	log::write(log::DEBUG, "Invite : '" + clientInvite + "'");
 	if (channelName[0] != '#')
 		return server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
 
@@ -576,7 +574,6 @@ void Parsing::CMD_NICK(Client *client, std::string &nickname)
 		}
 		catch (...)
 		{
-			log::write(log::DEBUG, "Le client n'est pas dans le channel");
 			continue;
 		}
 	}

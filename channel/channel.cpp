@@ -167,7 +167,6 @@ Client_channel Channel::getClientByNickname(std::string nickname)
 {
 	for (std::map<int, Client_channel>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		log::log::write(log::DEBUG, "Client : " + it->second._client->getNickname() + " - " + nickname);
 		if (it->second._client->getNickname() == nickname)
 			return it->second;
 	}
