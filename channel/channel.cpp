@@ -16,11 +16,12 @@
  **/
 Channel::Channel(Server &server, std::string &name, Client *client) : _server(server), _name(name), _topic("")
 {
-	addClient(client, true);
 	password = "";
 	limit = 0;
-	restrict_topic = false;
+	restrict_topic = true;
 	join_only_invite = false;
+	addClient(client, "", true);
+	_server.send_data(client->getSocketFd(), DEFAULT_MODES(_name));
 }
 
 Channel::~Channel() {}
@@ -33,28 +34,32 @@ Channel::~Channel() {}
  *
  * @param client L'objet Client représentant le client à ajouter.
  **/
-void Channel::addClient(Client *client, bool _operator)
+void Channel::addClient(Client *client, std::string password, bool _operator)
 {
-	// Si le channel est sur invite seulement
-	if (join_only_invite && _clients.size() > 0)
-	{
-		if (_clients.find(client->getSocketFd()) == _clients.end())
-			return _server.send_data(client->getSocketFd(), ERR_INVITE_ONLY(client->getNickname(), _name));
-	}
+	// Si le client est déjà dans le channel
+	if (_clients.find(client->getSocketFd()) != _clients.end() && _clients[client->getSocketFd()]._connected == true)
+		return;
+
+	// Si le mdp est requis
+	if (this->password.size() > 0 && password != this->password)
+		return _server.send_data(client->getSocketFd(), ERR_BADCHANNELKEY(client->getNickname(), _name));
 
 	// Si la limite est atteinte
-	if (limit > 0 && this->getClientCount() >= limit)
+	if (limit > 0 && this->getClientCount() >= limit && _clients[client->getSocketFd()]._invited == false)
+		return _server.send_data(client->getSocketFd(), ERR_CHANNELISFULL(client->getNickname(), _name));
+
+	// Si le channel est en mode invite only
+	if (join_only_invite)
 	{
-		if (_clients.find(client->getSocketFd()) == _clients.end())
-			return _server.send_data(client->getSocketFd(), ERR_CHANNELISFULL(client->getNickname(), _name));
+		if (_clients[client->getSocketFd()]._invited == false)
+			return _server.send_data(client->getSocketFd(), ERR_INVITE_ONLY(client->getNickname(), _name));
 	}
 
 	_clients[client->getSocketFd()]._client = client;
 	_clients[client->getSocketFd()]._connected = true;
 	_clients[client->getSocketFd()]._operator = _operator;
 	_clients[client->getSocketFd()]._invited = false;
-	this->broadcastMessage(client, USER_JOIN_CHANNEL(client->getUniqueName(), _name));
-	_server.send_data(client->getSocketFd(), USER_JOIN_CHANNEL(client->getUniqueName(), _name), false, true);
+	this->broadcastMessage(USER_JOIN_CHANNEL(client->getUniqueName(), _name));
 	if (_topic.size())
 		_server.send_data(client->getSocketFd(), INIT_TOPIC(client->getUniqueName(), _name, _topic));
 }
@@ -212,7 +217,7 @@ void Channel::setTopic(Client *client, std::string &topic)
 {
 	if (_clients.find(client->getSocketFd()) == _clients.end())
 		return _server.send_data(client->getSocketFd(), USER_NOT_IN_CHANNEL(client->getNickname(), _name));
-	if (_clients[client->getSocketFd()]._operator == false)
+	if (_clients[client->getSocketFd()]._operator == false && restrict_topic == true)
 		return _server.send_data(client->getSocketFd(), NOT_OPERATOR(client->getUniqueName(), _name));
 	this->_topic = topic;
 	this->broadcastMessage(SET_TOPIC(client->getUniqueName(), _name, topic));
@@ -245,9 +250,10 @@ int Channel::getClientCount()
  **/
 void Channel::sendInvite(Client *client, Client *target)
 {
-	// Si le client n'est pas dans le channel
 	Client_channel client_it = _clients[client->getSocketFd()];
 	Client_channel target_it = _clients[target->getSocketFd()];
+
+	// Si le client n'est pas connecté
 	if (client_it._connected == false)
 		return _server.send_data(client->getSocketFd(), USER_NOT_IN_CHANNEL(client->getNickname(), _name));
 
@@ -259,6 +265,103 @@ void Channel::sendInvite(Client *client, Client *target)
 	if (target_it._connected == true)
 		return _server.send_data(client->getSocketFd(), ERR_USER_ON_CHANNEL(client->getNickname(), target->getNickname(), _name));
 
+	target_it._connected = false;
+	target_it._operator = false;
+	target_it._client = target;
+	target_it._invited = true;
+	_clients[target->getSocketFd()] = target_it;
 	_server.send_data(client->getSocketFd(), INVITE_CALLBACK(client->getNickname(), target->getNickname(), _name));
 	_server.send_data(target->getSocketFd(), INVITE_TO_TARGET(client->getUniqueName(), target->getNickname(), _name), false);
+}
+
+/**
+ * @brief Mode du canal.
+ *
+ **/
+void Channel::setMode(Client *client, std::string mode, std::string args)
+{
+	std::string change = "";
+	if (_clients.find(client->getSocketFd()) == _clients.end())
+		return _server.send_data(client->getSocketFd(), USER_NOT_IN_CHANNEL(client->getNickname(), _name));
+	if (_clients[client->getSocketFd()]._operator == false)
+		return _server.send_data(client->getSocketFd(), NOT_OPERATOR(client->getUniqueName(), _name));
+	if (mode == "+i")
+	{
+		this->join_only_invite = true;
+		change = "+i";
+	}
+	else if (mode == "-i")
+	{
+		this->join_only_invite = false;
+		change = "-i";
+	}
+	else if (mode == "+t")
+	{
+		this->restrict_topic = true;
+		change = "+t";
+	}
+	else if (mode == "-t")
+	{
+		this->restrict_topic = false;
+		change = "-t";
+	}
+	else if (mode == "+l")
+	{
+		this->limit = log::toInt(args);
+		change = "+l " + log::toString(this->limit);
+	}
+	else if (mode == "-l")
+	{
+		this->limit = 0;
+		change = "-l";
+	}
+	else if (mode == "+k")
+	{
+		this->password = args;
+		change = "+k " + this->password;
+	}
+	else if (mode == "-k")
+	{
+		this->password = "";
+		change = "-k";
+	}
+	else if (mode == "+o" || mode == "-o")
+	{
+		try
+		{
+			Client_channel client_it = this->getClientByNickname(args);
+			if (mode == "+o")
+			{
+				_clients[client_it._client->getSocketFd()]._operator = true;
+				change = "+o " + client_it._client->getNickname();
+			}
+			else
+			{
+				_clients[client_it._client->getSocketFd()]._operator = false;
+				change = "-o " + client_it._client->getNickname();
+			}
+		}
+		catch (...)
+		{
+			return;
+		}
+	}
+	else
+		return;
+	this->broadcastMessage(UPDATE_MODE(client->getUniqueName(), _name, change));
+	_server.send_data(client->getSocketFd(), MODE_CHANNEL(client->getUniqueName(), _name, modeToString()));
+}
+
+std::string Channel::modeToString()
+{
+	std::string mode = "Cns";
+	if (this->join_only_invite)
+		mode += "i";
+	if (this->restrict_topic)
+		mode += "t";
+	if (this->limit > 0)
+		mode += "l " + log::toString(this->limit);
+	if (this->password.size() > 0)
+		mode += "k " + this->password;
+	return mode;
 }

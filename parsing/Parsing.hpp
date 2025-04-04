@@ -29,6 +29,7 @@ private:
 	void CMD_TOPIC(Client *client, std::string &args);
 	void CMD_INVITE(Client *client, std::string &args);
 	void CMD_LIST(Client *client, std::string &channel);
+	void CMD_MODE(Client *client, std::string &args);
 
 	// CLIENT
 	bool CMD_PASS(Client *client, std::string &password);

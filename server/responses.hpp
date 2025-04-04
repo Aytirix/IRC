@@ -6,14 +6,6 @@
 /* ----------------------- CMD ----------------------- */
 #define NOT_ENOUGH_PARAMS(nickname, cmd) "461 " + nickname + " " + cmd + " :Not enough parameters"
 
-
-
-
-
-/* --------- PING ----------- */
-
-
-
 /* ----------------------- CHANNEL ----------------------- */
 #define LEAVE_CHANNEL(unique_nickname, channel, message) ":" + unique_nickname + " PART " + channel + " :" + message
 #define USER_NOT_IN_CHANNEL(nickname, channel) "442 " + nickname + " " + channel + " :You're not on that channel"
@@ -45,18 +37,20 @@
 #define LIST_START(nickname) "321 " + nickname + " Channel :Users  Name"
 #define LIST_CHANNEL(nickname, channel, user_connected, topic) "322 " + nickname + " " + channel + " " + user_connected + " :" + topic
 #define END_OF_LIST(nickname) "323 " + nickname + " :End of /LIST"
+/* -------- LIMIT -------- */
+#define ERR_CHANNELISFULL(nickname, channel) "471 " + nickname + " " + channel + " :Cannot join channel (+l)"
+/* -------- MODE -------- */
+#define MODE_CHANNEL(nickname, channel, mode) "324 " + nickname + " " + channel + " +" + mode
+#define DEFAULT_MODES(channel) "MODE " + channel + " +Cnst"
+#define UPDATE_MODE(unique_nickname, channel, mode) ":" + unique_nickname + " MODE " + channel + " " + mode
+/* -------- PASSWORD -------- */
+#define ERR_BADCHANNELKEY(nickname, channel) "475 " + nickname + " " + channel + " :Cannot join channel (+k)"
 
 /* ----------------------- CONNEXION ----------------------- */
 #define WELCOME(nickname) "001 "+ nickname +" :Bienvenue "+ nickname +" sur le serveur 42Project !"
 #define ERR_PASSWD_MISMATCH "464 :Password incorrect"
 #define ERR_PASSWD_MISSING "461 :Password required"
 #define ERR_ALREADY_REGISTERED(nickname) "462 " + nickname + " :You are already connected and cannot handshake again"
-/* ----------------------- LIMIT ----------------------- */
-#define ERR_CHANNELISFULL(nickname, channel) "471 " + nickname + " " + channel + " :Cannot join channel (+l)"
-
-/* ----------------------- MODE ----------------------- */
-#define ALL_MODES(channel) "MODE " + channel + " +itkol"
-
 
 /* ----------------------- NICK ----------------------- */
 #define ERR_NICKNAME_IN_USE(nickname, use_nickname) "433 " + nickname + use_nickname + " :Nickname is already in use"

@@ -1,1 +1,3 @@
-MODE #test
+quand tu rejoint un channel 
+client : MODE #test_theo
+reponse : @time=2025-04-02T15:04:49.309Z :tungsten.libera.chat MODE #test_theo +Cnst

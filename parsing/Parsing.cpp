@@ -147,7 +147,7 @@ bool Parsing::init_parsing(Client *client, std::string &buffer)
 	else if (client->IsConnected() == true)
 	{
 		if (command == "MODE")
-			server.send_data(client->getSocketFd(), ALL_MODES(command));
+		this->CMD_MODE(client, args);
 		else if (command == "JOIN")
 			this->CMD_JOIN(client, args);
 		else if (buffer.substr(0, 3) == "WHO")
@@ -193,7 +193,7 @@ void Parsing::CMD_WHO(Client *client, std::string &channel)
 	}
 	std::string list_users = it->second.getAllClientsString();
 	server.send_data(client->getSocketFd(), WHO_LIST_USER(client->getNickname(), channel, list_users));
-	server.send_data(client->getSocketFd(), END_OF_NAMES(client->getNickname(), channel));
+	server.send_data(client->getSocketFd(), END_OF_WHO(client->getNickname(), channel));
 }
 
 /**
@@ -260,6 +260,13 @@ void Parsing::CMD_PART(Client *client, std::string &args)
  **/
 void Parsing::CMD_JOIN(Client *client, std::string &channelName)
 {
+	std::string password = "";
+	if (channelName.find(" ") != std::string::npos)
+	{
+		password = channelName.substr(channelName.find(" ") + 1, channelName.size() - 1);
+		channelName = channelName.substr(0, channelName.find(" "));
+	}
+		
 	if (channelName[0] != '#')
 	{
 		server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
@@ -272,7 +279,7 @@ void Parsing::CMD_JOIN(Client *client, std::string &channelName)
 		server._channels.insert(std::make_pair(channelName, channel));
 	}
 	else
-		it->second.addClient(client);
+		it->second.addClient(client, password);
 }
 
 /**
@@ -354,6 +361,39 @@ void Parsing::CMD_INVITE(Client *client, std::string &args)
 }
 
 /**
+ * @brief CMD_MODE
+ * Cette commande permet d'inviter un client à rejoindre un channel
+ * @param client : le client qui a envoyé la commande
+ * @param args : les arguments de la commande
+ **/
+void Parsing::CMD_MODE(Client *client, std::string &args)
+{
+	std::string channelName = args.substr(0, args.find(" "));
+	if (channelName[0] != '#')
+	return server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
+
+	// Recherche le channel
+	std::map<std::string, Channel>::iterator it_channel = server._channels.find(channelName);
+	if (it_channel == server._channels.end())
+	return server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
+
+	if (args.find(" ") == std::string::npos)
+	return server.send_data(client->getSocketFd(), MODE_CHANNEL(client->getNickname(), channelName, it_channel->second.modeToString()));
+
+	std::string mode = args.substr(args.find(" ") + 1, args.size() - 1);
+	std::string args_mode = "";
+	if (mode.find(" ") != std::string::npos)
+	{
+		args_mode = mode.substr(mode.find(" ") + 1, mode.size() - 1);
+		mode = mode.substr(0, mode.find(" "));
+	}
+	if (mode.empty() == false)
+		it_channel->second.setMode(client, mode, args_mode);
+	else
+		server.send_data(client->getSocketFd(), MODE_CHANNEL(client->getNickname(), channelName, it_channel->second.modeToString()));
+}
+
+/**
  * @brief CMD_CAP
  * Gère les commandes CAP
  * Si une commande CAP LS 302 est reçue, on envoie la liste des capabilities
@@ -363,7 +403,7 @@ void Parsing::CMD_INVITE(Client *client, std::string &args)
  **/
 void Parsing::CMD_CAP(Client *client, std::string &args)
 {
-	std::string caps = "chghost extended-join";
+	std::string caps = "chghost extended-join server-time";
 	if (args == "LS 302")
 		server.send_data(client->getSocketFd(), CAP_LIST(caps), true, false);
 	else if (args == "REQ")

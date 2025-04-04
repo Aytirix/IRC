@@ -27,6 +27,14 @@ public:
 		return ss.str();
 	}
 
+	static int toInt(std::string value)
+	{
+		std::stringstream ss(value);
+		int intValue;
+		ss >> intValue;
+		return intValue;
+	}
+
 	static std::string getTime(std::string format = "%Y-%m-%d %H:%M:%S")
 	{
 		std::time_t now = std::time(0);
