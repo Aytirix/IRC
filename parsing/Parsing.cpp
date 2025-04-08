@@ -602,8 +602,8 @@ void Parsing::CMD_NICK(Client *client, std::string &nickname)
 	// Si le client n'a pas encore de pseudo, on lui envoie un message de bienvenue
 	if (old_nickname.size() == 0)
 	{
-		// std::string str = client->getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
-		// CMD_PRIVMSG(*server._chatbot, str);
+		std::string str = client->getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
+		CMD_PRIVMSG(server._chatbot, str);
 		server.send_data(client->getSocketFd(), WELCOME(client->getNickname()), true, false);
 	}
 

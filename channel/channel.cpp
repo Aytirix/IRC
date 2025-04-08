@@ -65,32 +65,6 @@ void Channel::addClient(Client *client, std::string password, bool _operator)
 }
 
 /**
- * @brief Ajoute un opérateur au canal.
- *
- * Cette fonction ajoute un client en tant qu'opérateur du canal en
- * ajoutant le descripteur de socket du client à la liste des opérateurs.
- *
- * @param client Référence vers l'objet Client à ajouter en tant qu'opérateur.
- **/
-void Channel::addOperator(Client_channel &client)
-{
-	client._operator = true;
-}
-
-/**
- * @brief Supprime un opérateur du canal.
- *
- * Cette fonction retire un client de la liste des opérateurs du canal
- * en utilisant le descripteur de socket du client.
- *
- * @param client Référence vers l'objet Client à retirer des opérateurs.
- **/
-void Channel::removeOperator(Client_channel &client)
-{
-	client._operator = false;
-}
-
-/**
  * @brief Supprime un client du canal.
  *
  * Cette fonction tente de supprimer un client spécifique du canal en utilisant
@@ -201,6 +175,7 @@ void Channel::kickClient(Client *client, std::string &client_kick, std::string &
 		return _server.send_data(client->getSocketFd(), ERR_NOSUCH_NICK(client->getUniqueName(), client_kick, _name));
 	}
 	kick._connected = false;
+	_clients[kick._client->getSocketFd()] = kick;
 	this->broadcastMessage(KICK(client->getUniqueName(), _name, kick._client->getNickname(), message));
 }
 

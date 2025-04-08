@@ -43,8 +43,6 @@ public:
 	bool disconnectClientChannel(Client *client, bool delete_client = false);
 	void broadcastMessage(std::string message);
 	void broadcastMessage(Client *client, std::string message);
-	void addOperator(Client_channel &client);
-	void removeOperator(Client_channel &client);
 	std::string getAllClientsString();
 	void kickClient(Client *client, std::string &client_kick, std::string &message);
 	void setTopic(Client *client, std::string &topic);
