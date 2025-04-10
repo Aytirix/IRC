@@ -21,13 +21,13 @@ private:
 	bool check_enough_params(Client *client, std::string &command, std::string &args);
 
 	// CHANNEL
-	void CMD_WHO(Client *client, std::string &channel);
-	void CMD_JOIN(Client *client, std::string &channelName);
-	void CMD_PART(Client *client, std::string &args);
-	void CMD_PRIVMSG(Client *client, std::string &args);
-	void CMD_KICK(Client *client, std::string &args);
-	void CMD_TOPIC(Client *client, std::string &args);
-	void CMD_INVITE(Client *client, std::string &args);
+	void commandWho(Client *client, std::string &channel);
+	void commandJoin(Client *client, std::string &channelName);
+	void commandPart(Client *client, std::string &args);
+	void commandPrivateMessage(Client *client, std::string &args);
+	void commandKick(Client *client, std::string &args);
+	void commandTopic(Client *client, std::string &args);
+	void commandInvite(Client *client, std::string &args);
 	void CMD_LIST(Client *client, std::string &channel);
 	void CMD_MODE(Client *client, std::string &args);
 

@@ -66,6 +66,7 @@ Chatbot::~Chatbot()
 	curl_global_cleanup();
 	for (std::map<int, std::vector<Message> >::iterator it = _clients.begin(); it != _clients.end(); ++it)
 		it->second.clear();
+	_clients.clear();
 }
 
 /**

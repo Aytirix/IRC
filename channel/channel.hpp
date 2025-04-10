@@ -52,7 +52,7 @@ public:
     // Getters
 	Client_channel getClientByNickname(std::string nickname);
 	std::string modeToString();
-	std::string getname() { return _name; };
+	std::string getName() { return _name; };
 	std::string getTopic() { return _topic; };
 	int getClientCount();
     // Setters

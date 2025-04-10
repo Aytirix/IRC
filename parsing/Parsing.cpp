@@ -123,7 +123,6 @@ bool Parsing::init_parsing(Client *client, std::string &buffer)
 	buffer = RemoveHiddenChar(buffer);
 	if (buffer.size() == 0)
 		return true;
-	log::write(log::RECEIVED, "fd(" + log::toString(client->getSocketFd()) + ") : '" + buffer + "'");
 
 	std::string command = buffer.substr(0, buffer.find(" "));
 	std::string args = "";
@@ -147,28 +146,28 @@ bool Parsing::init_parsing(Client *client, std::string &buffer)
 	else if (client->IsConnected() == true)
 	{
 		if (command == "MODE")
-		this->CMD_MODE(client, args);
+			this->CMD_MODE(client, args);
 		else if (command == "JOIN")
-			this->CMD_JOIN(client, args);
+			this->commandJoin(client, args);
 		else if (buffer.substr(0, 3) == "WHO")
-			this->CMD_WHO(client, args);
+			this->commandWho(client, args);
 		else if (command == "PART")
-			this->CMD_PART(client, args);
+			this->commandPart(client, args);
 		else if (command == "PRIVMSG")
-			this->CMD_PRIVMSG(client, args);
+			this->commandPrivateMessage(client, args);
 		else if (command == "KICK")
-			this->CMD_KICK(client, args);
+			this->commandKick(client, args);
 		else if (command == "TOPIC")
-			this->CMD_TOPIC(client, args);
+			this->commandTopic(client, args);
 		else if (command == "INVITE")
-			this->CMD_INVITE(client, args);
+			this->commandInvite(client, args);
 		else if (command == "LIST")
 			this->CMD_LIST(client, args);
 		else if (command == "PING")
-			{
-				server.send_data(client->getSocketFd(), PONG(client->getNickname(), args));
-				return true;
-			}
+		{
+			server.send_data(client->getSocketFd(), PONG(client->getNickname(), args));
+			return true;
+		}
 		else
 			server.send_data(client->getSocketFd(), ERR_UNKNOWNCOMMAND(client->getNickname(), buffer.substr(0, buffer.find(" "))));
 	}
@@ -183,7 +182,7 @@ bool Parsing::init_parsing(Client *client, std::string &buffer)
  * @param client : le client qui a envoyé la commande
  * @param buffer : la commande à parser
  **/
-void Parsing::CMD_WHO(Client *client, std::string &channel)
+void Parsing::commandWho(Client *client, std::string &channel)
 {
 	std::map<std::string, Channel>::iterator it = server._channels.find(channel);
 	if (it == server._channels.end())
@@ -222,7 +221,7 @@ void Parsing::CMD_LIST(Client *client, std::string &args)
  * @param channelName : le nom du channel
  * @param message : le message à envoyer
  **/
-void Parsing::CMD_PART(Client *client, std::string &args)
+void Parsing::commandPart(Client *client, std::string &args)
 {
 	std::string channelName = args.substr(0, args.find(" "));
 	size_t colon_pos = args.find(":");
@@ -258,7 +257,7 @@ void Parsing::CMD_PART(Client *client, std::string &args)
  * @param client : le client qui a envoyé la commande
  * @param channelName : le nom du channel
  **/
-void Parsing::CMD_JOIN(Client *client, std::string &channelName)
+void Parsing::commandJoin(Client *client, std::string &channelName)
 {
 	std::string password = "";
 	if (channelName.find(" ") != std::string::npos)
@@ -266,7 +265,7 @@ void Parsing::CMD_JOIN(Client *client, std::string &channelName)
 		password = channelName.substr(channelName.find(" ") + 1, channelName.size() - 1);
 		channelName = channelName.substr(0, channelName.find(" "));
 	}
-		
+
 	if (channelName[0] != '#')
 	{
 		server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
@@ -288,7 +287,7 @@ void Parsing::CMD_JOIN(Client *client, std::string &channelName)
  * @param client : le client qui a envoyé la commande
  * @param args : les arguments de la commande
  **/
-void Parsing::CMD_KICK(Client *client, std::string &args)
+void Parsing::commandKick(Client *client, std::string &args)
 {
 	std::string channelName = args.substr(0, args.find(" "));
 	size_t firstSpace = args.find(" ");
@@ -309,7 +308,7 @@ void Parsing::CMD_KICK(Client *client, std::string &args)
  * @param client : le client qui a envoyé la commande
  * @param args : les arguments de la commande
  **/
-void Parsing::CMD_TOPIC(Client *client, std::string &args)
+void Parsing::commandTopic(Client *client, std::string &args)
 {
 	std::string channelName = args.substr(0, args.find(" "));
 	std::string newtopic = args.substr(args.find(":") + 1, args.size() - 1);
@@ -330,7 +329,7 @@ void Parsing::CMD_TOPIC(Client *client, std::string &args)
  * @param client : le client qui a envoyé la commande
  * @param args : les arguments de la commande
  **/
-void Parsing::CMD_INVITE(Client *client, std::string &args)
+void Parsing::commandInvite(Client *client, std::string &args)
 {
 	std::string channelName = args.substr(args.find(" ") + 1, args.size() - args.find(" ") - 1);
 	std::string clientInvite = args.substr(0, args.find(" "));
@@ -370,15 +369,15 @@ void Parsing::CMD_MODE(Client *client, std::string &args)
 {
 	std::string channelName = args.substr(0, args.find(" "));
 	if (channelName[0] != '#')
-	return server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
+		return server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
 
 	// Recherche le channel
 	std::map<std::string, Channel>::iterator it_channel = server._channels.find(channelName);
 	if (it_channel == server._channels.end())
-	return server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
+		return server.send_data(client->getSocketFd(), ERR_NOSUCH_CHANNEL(client->getNickname(), channelName));
 
 	if (args.find(" ") == std::string::npos)
-	return server.send_data(client->getSocketFd(), MODE_CHANNEL(client->getNickname(), channelName, it_channel->second.modeToString()));
+		return server.send_data(client->getSocketFd(), MODE_CHANNEL(client->getNickname(), channelName, it_channel->second.modeToString()));
 
 	std::string mode = args.substr(args.find(" ") + 1, args.size() - 1);
 	std::string args_mode = "";
@@ -432,7 +431,7 @@ void Parsing::CMD_CAP(Client *client, std::string &args)
  * @param client : le client qui a envoyé le message
  * @param buffer : le message à parser
  **/
-void Parsing::CMD_PRIVMSG(Client *client, std::string &args)
+void Parsing::commandPrivateMessage(Client *client, std::string &args)
 {
 	// Si pour le message on ne trouve pas de : et qu'il y a pas au moins un caractere après le :
 	if (args.find(" :") == std::string::npos || args.find(":") == args.size() - 1)
@@ -466,7 +465,12 @@ void Parsing::CMD_PRIVMSG(Client *client, std::string &args)
 		if (target == server._chatbot->getNickname() && message[0] != '' && message.find("SHA-256 checksum for /") == std::string::npos)
 		{
 			std::string reponse = server._chatbot->sendMessage(client, message);
-			server.send_data(client->getSocketFd(), PRIV_MSG(server._chatbot->getUniqueName(), client->getNickname(), reponse), false, true);
+			std::vector<std::string> lines = split(reponse, '\n');
+			for (size_t i = 0; i < lines.size(); i++)
+			{
+				lines[i] = lines[i].substr(lines[i].find(":") + 1, lines[i].size() - lines[i].find(":") - 1);
+				server.send_data(client->getSocketFd(), PRIV_MSG(server._chatbot->getUniqueName(), client->getNickname(), lines[i]), false, true);
+			}
 		}
 		// Si c'est un message privé à un client
 		else
@@ -508,7 +512,7 @@ bool Parsing::CMD_PASS(Client *client, std::string &password)
 		server.DisconnectClient(client);
 		return false;
 	}
-	client->passwordVerified(); // Valider le mot de passe
+	client->setPasswordVerified(); // Valider le mot de passe
 	return true;
 }
 
@@ -603,7 +607,7 @@ void Parsing::CMD_NICK(Client *client, std::string &nickname)
 	if (old_nickname.size() == 0)
 	{
 		std::string str = client->getNickname() + " :Salut mon ami, je suis le chatbot du serveur, si tu as besoin d'aide, n'hésite pas à me demander !";
-		CMD_PRIVMSG(server._chatbot, str);
+		commandPrivateMessage(server._chatbot, str);
 		server.send_data(client->getSocketFd(), WELCOME(client->getNickname()), true, false);
 	}
 

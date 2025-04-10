@@ -8,8 +8,7 @@
 #include "responses.hpp"
 #include "hasher.hpp"
 
-Server::Server(int port, const std::string &password)
-	: _listen_fd(-1), _port(port), _password(Hasher::hash(password))
+Server::Server(int port, const std::string &password, volatile bool &stop) : _listen_fd(-1), _port(port), _password(Hasher::hash(password)), _stop(stop)
 {
 	// initialiser la map des clients
 	_clients.clear();
@@ -19,9 +18,24 @@ Server::Server(int port, const std::string &password)
 
 Server::~Server()
 {
-	delete _chatbot;
 	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
 		close(it->first);
+		pollfd socketPfd = it->second.getSocketPfd();
+		socketPfd.events = 0;
+		socketPfd.revents = 0;
+		socketPfd.fd = -1;
+		it->second.setSocketPfd(socketPfd);
+		it->second.setNickname("");
+		it->second.setUserName("");
+		it->second.setRealName("");
+		it->second.setIp("");
+		it->second.getBuffer().clear();
+		it->second.setPasswordNotVerified();
+		it->second.getSendBuffer().clear();
+		_chatbot->deleteClient(&it->second);
+	}
+	delete _chatbot;
 }
 
 /**
@@ -31,6 +45,13 @@ void Server::run()
 {
 	while (true)
 	{
+		// Vérifier si le serveur doit être arrêté
+		if (_stop)
+		{
+			log::log::write(log::log::INFO, "Arrêt du serveur...");
+			break;
+		}
+
 		// Reconstruire le tableau de pollfd à partir de la map
 		std::vector<pollfd> pollfds;
 		for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -41,6 +62,21 @@ void Server::run()
 		{
 			perror("poll");
 			break;
+		}
+
+		// parcourir la liste des clients et lle supprimer s'il est déconnecté
+		std::map<int, Client>::iterator it = _clients.begin();
+		while (it != _clients.end())
+		{
+			if (it->second.getSocketFd() == -1)
+			{
+				log::log::write(log::log::INFO, "Suppression du client : fd(" + log::toString(it->first) + ")");
+				std::map<int, Client>::iterator toErase = it;
+				++it;
+				_clients.erase(toErase);
+			}
+			else
+				++it;
 		}
 
 		// Parcourir les descripteurs ayant généré un événement
@@ -188,10 +224,20 @@ void Server::DisconnectClient(Client *client)
 			}
 		}
 	}
-	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client->getSocketFd()) + ")");
 	close(client->getSocketFd());
+	pollfd socketPfd = client->getSocketPfd();
+	socketPfd.events = 0;
+	socketPfd.revents = 0;
+	socketPfd.fd = -1;
+	client->setSocketPfd(socketPfd);
+	client->setNickname("");
+	client->setUserName("");
+	client->setRealName("");
+	client->setIp("");
+	client->getBuffer().clear();
+	client->setPasswordNotVerified();
+	client->getSendBuffer().clear();
 	_chatbot->deleteClient(client);
-	_clients.erase(client->getSocketFd());
 }
 
 /**
@@ -208,9 +254,20 @@ void Server::DisconnectClient(Client *client, std::string message)
 		if (it->second.disconnectClientChannel(client, true))
 			it->second.broadcastMessage(LEAVE_CHANNEL(client->getUniqueName(), it->first, message));
 	}
-	log::log::write(log::log::INFO, "Client déconnecté : fd(" + log::toString(client->getSocketFd()) + ")");
 	close(client->getSocketFd());
-	_clients.erase(client->getSocketFd());
+	pollfd socketPfd = client->getSocketPfd();
+	socketPfd.events = 0;
+	socketPfd.revents = 0;
+	socketPfd.fd = -1;
+	client->setSocketPfd(socketPfd);
+	client->setNickname("");
+	client->setUserName("");
+	client->setRealName("");
+	client->setIp("");
+	client->getBuffer().clear();
+	client->setPasswordNotVerified();
+	client->getSendBuffer().clear();
+	_chatbot->deleteClient(client);
 }
 
 /**
@@ -247,6 +304,7 @@ void Server::handleClientData(int client_fd)
 
 	// Tant qu'une commande complète (délimitée par '\n') est présente, on la traite
 	std::string::size_type pos;
+	log::write(log::RECEIVED, "fd(" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 	while ((pos = buffer.find("\n")) != std::string::npos)
 	{
 		std::string command = buffer.substr(0, pos);

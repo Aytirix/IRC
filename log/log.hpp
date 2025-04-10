@@ -38,8 +38,8 @@ public:
 	static std::string getTime(std::string format = "%Y-%m-%d %H:%M:%S")
 	{
 		std::time_t now = std::time(0);
-		char *buf = new char[80];
-		std::strftime(buf, 80, format.c_str(), std::localtime(&now));
+		char buf[80];
+		std::strftime(buf, sizeof(buf), format.c_str(), std::localtime(&now));
 		return std::string(buf);
 	}
 
@@ -67,9 +67,7 @@ public:
 			levelStr = BRIGHT_YELLOW "DEBUG   ";
 			break;
 		}
-
 		std::string logEntry = GREEN "[" + getTime() + "] " + levelStr + " : " + message + RESET;
-
 		std::cout << logEntry << std::endl;
 	}
 };

@@ -40,7 +40,8 @@ public:
 	void setUserName(const std::string &username) { this->_username = username; }
 	void setRealName(const std::string &realname) { this->_realname = realname; }
 	void setIp(const std::string &ip) { this->_ip = ip; }
-	void passwordVerified() { this->password_verified = true; }
+	void setPasswordVerified() { this->password_verified = true; }
+	void setPasswordNotVerified() { this->password_verified = false; }
 	bool IsConnected() const { return (password_verified && this->_nickName != "" && this->_username != "") ? true : false; }
 };
 

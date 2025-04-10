@@ -1,7 +1,7 @@
 CC = g++
 NAME = ircserv
 
-CFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 -fsanitize=address
+CFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 #-fsanitize=address
 
 LDFLAGS = -lcurl
 
@@ -33,7 +33,7 @@ fclean: clean
 
 start: all
 	-fuser -k 6667/tcp
-	./$(NAME) 6667 password
+	valgrind --leak-check=full --show-leak-kinds=all ./$(NAME) 6667 password
 
 restart: re start
 

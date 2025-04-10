@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <arpa/inet.h>
-
+#include <memory>
 
 class Parsing;
 class Channel;
@@ -25,7 +25,7 @@ class Client;
 class Server
 {
 public:
-	Server(int port, const std::string &password);
+	Server(int port, const std::string &password, volatile bool &stop);
 	~Server();
 
 	bool init();
@@ -40,6 +40,7 @@ private:
 	int _listen_fd;
 	int _port;
 	unsigned long _password;
+	volatile bool &_stop;
 	std::map<int, Client> _clients;
 	std::map<std::string, Channel> _channels;
 	Chatbot *_chatbot;

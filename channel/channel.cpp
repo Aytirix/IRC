@@ -41,7 +41,7 @@ void Channel::addClient(Client *client, std::string password, bool _operator)
 		return;
 
 	// Si le mdp est requis
-	if (this->password.size() > 0 && password != this->password)
+	if (this->password.size() > 0 && password != this->password && _clients[client->getSocketFd()]._invited == false)
 		return _server.send_data(client->getSocketFd(), ERR_BADCHANNELKEY(client->getNickname(), _name));
 
 	// Si la limite est atteinte
