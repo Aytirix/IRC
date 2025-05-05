@@ -29,7 +29,6 @@ private:
 	std::string _name;
 	std::string _topic;
 	std::map<int, Client_channel> _clients;
-	std::list<int> _operators;
 	std::string password;
 	int limit;
 	bool restrict_topic;
