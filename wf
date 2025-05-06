@@ -1,17 +1,9 @@
-write: Bad file descriptor
-[2025-03-28 19:12:51] INFO     : Client déconnecté : fd(1909618208)
-[2025-03-28 19:12:51] SENT     : fd(6) : '@time=2025-03-28T19:12:51.000Z :Aytirix2!Aytirix3@127.0.0.1 PART #test3 :Leaving'
-[2025-03-28 19:12:51] INFO     : Client déconnecté : fd(6)
-[2025-03-28 19:12:51] INFO     : Nouvelle connexion : fd(5)
-[2025-03-28 19:12:59] RECEIVED : fd(4) : 'PRIVMSG #test3 :ghjk'
-[2025-03-28 19:12:59] SENT     : fd(5) : '@time=2025-03-28T19:12:59.000Z :Aytirix!Aytirix3@127.0.0.1 PRIVMSG #test3 :ghjk'
-[2025-03-28 19:12:59] SENT     : fd(6) : '@time=2025-03-28T19:12:59.000Z :Aytirix!Aytirix3@127.0.0.1 PRIVMSG #test3 :ghjk'
-write: Bad file descriptor
-[2025-03-28 19:12:59] INFO     : Client déconnecté : fd(1909619152)
-[2025-03-28 19:14:24] RECEIVED : fd(4) : 'QUIT :Leaving'
-[2025-03-28 19:14:24] SENT     : fd(4) : '@time=2025-03-28T19:14:24.000Z :Aytirix!Aytirix3@127.0.0.1 PART #test3 :Leaving'
-[2025-03-28 19:14:24] SENT     : fd(5) : '@time=2025-03-28T19:14:24.000Z :Aytirix!Aytirix3@127.0.0.1 PART #test3 :Leaving'
-[2025-03-28 19:14:24] SENT     : fd(6) : '@time=2025-03-28T19:14:24.000Z :Aytirix!Aytirix3@127.0.0.1 PART #test3 :Leaving'
-write: Bad file descriptor
-[2025-03-28 19:14:24] INFO     : Client déconnecté : fd(1909619152)
-[2025-03-28 19:14:24] INFO     : Client déconnecté : fd(4)
+PASS password
+NICK USERNC
+USER USERNC 0 * :realname
+CAP REQ :chghost extended-join server-time
+CAP END
+JOIN #test
+PRIVMSG #test :hello
+PRIVMSG #test :voici
+PRIVMSG #test :des messages

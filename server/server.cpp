@@ -304,12 +304,13 @@ void Server::handleClientData(int client_fd)
 
 	// Tant qu'une commande complète (délimitée par '\n') est présente, on la traite
 	std::string::size_type pos;
-	log::write(log::RECEIVED, "fd(" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
+	// log::write(log::RECEIVED, "fd(" + log::toString(client.getSocketFd()) + ") : '" + buffer + "'");
 	while ((pos = buffer.find("\n")) != std::string::npos)
 	{
 		std::string command = buffer.substr(0, pos);
 		buffer.erase(0, pos + 1);
 		Parsing parsing(*this);
+		log::write(log::EXECUTE, "fd(" + log::toString(client.getSocketFd()) + ") : '" + command + "'");
 		if (parsing.init_parsing(&client, command) == false)
 		{
 			// verifier que le client a bien été supprimé

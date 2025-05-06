@@ -16,6 +16,7 @@ public:
 		WARNING,
 		ERROR,
 		RECEIVED,
+		EXECUTE,
 		SENT,
 		DEBUG
 	};
@@ -65,6 +66,9 @@ public:
 			break;
 		case DEBUG:
 			levelStr = BRIGHT_YELLOW "DEBUG   ";
+			break;
+		case EXECUTE:
+			levelStr = BRIGHT_GREEN "EXECUTE ";
 			break;
 		}
 		std::string logEntry = GREEN "[" + getTime() + "] " + levelStr + " : " + message + RESET;
